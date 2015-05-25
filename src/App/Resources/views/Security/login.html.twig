@@ -9,7 +9,11 @@
                     <div class="panel-heading">
                         <h3 class="panel-title">Login</h3>
                     </div>
-                    <div class="panel-body">
+                    <div class="panel-footer">
+                        <a class="btn btn-primary btn-block" href="{{ url('app_login_shib') }}">KU Leuven Login</a>
+                        <button class="btn btn-block" onclick="$('.js-password-login').removeClass('hidden'); $(this).parent().addClass('hidden')" type="button">Password login</button>
+                    </div>
+                    <div class="panel-body hidden js-password-login">
                         {% if error %}
                             <div class="alert alert-danger" role="alert">
                                 {% if error_type == "Symfony\\Component\\Security\\Core\\Exception\\LockedException" %}
@@ -29,7 +33,7 @@
                             <input type="password" class="form-control" id="password" name="_password">
                         </div>
                     </div>
-                    <div class="panel-footer text-center">
+                    <div class="panel-footer text-center hidden js-password-login">
                         <button class="btn btn-primary btn-block" type="submit">Login</button>
                     </div>
                 </div>

@@ -3,6 +3,11 @@ app_login:
     defaults:
         _controller: AppBundle:Security:login
 
+app_login_shib:
+    path: /login/shib
+    defaults:
+        _controller: AppBundle:Security:shibboleth
+
 app_login_check:
     path: /login_check
 

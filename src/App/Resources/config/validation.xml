@@ -9,8 +9,8 @@
                 <option name="max">25</option>
             </constraint>
             <constraint name="Regex">
-                <option name="pattern">/^[a-z0-9_]+$/</option>
-                <option name="message">Username can only contain letters, numbers and underscores.</option>
+                <option name="pattern">/^[a-z0-9_.@]+$/</option>
+                <option name="message">Username can only contain letters, numbers, underscores, @s and dots.</option>
             </constraint>
             <constraint name="Regex">
                 <option name="pattern">/^[a-z]/</option>

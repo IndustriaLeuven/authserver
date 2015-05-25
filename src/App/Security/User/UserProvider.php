@@ -26,14 +26,10 @@ class UserProvider extends EntityUserProvider implements ShibbolethUserProviderI
         $user->setDisplayName($token->getFullName());
         $user->setUsername($token->getUsername());
         $user->setPasswordEnabled(0);
-        $user->isEnabled(true);
-
-        $mail = new EmailAddress();
-        $mail->setEmail($token->getMail());
-        $mail->setVerified(true);
-        $mail->setPrimary(true);
-        $user->addEmailAddress($mail);
-
+        $user->setEnabled(true);
+        $user->getPrimaryEmailAddress()
+            ->setEmail($token->getMail())
+            ->setVerified(true);
         $this->repo->create($user);
 
         return $user;

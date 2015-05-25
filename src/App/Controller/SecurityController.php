@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Security\Core\SecurityContext;
 
@@ -34,5 +35,13 @@ class SecurityController extends Controller
             'error'         => $error,
             'error_type'    => $error?get_class($error):null,
         ));
+    }
+
+    public function shibbolethAction(Request $request)
+    {
+        if(!$this->isGranted('ROLE_USER'))
+            return new RedirectResponse($this->get('shibboleth')->getLoginUrl($request));
+        $session = $request->getSession();
+        return new RedirectResponse($session->get('_security.target_path', $this->generateUrl('home')));
     }
 }
