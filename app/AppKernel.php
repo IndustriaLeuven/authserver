@@ -28,6 +28,7 @@ class AppKernel extends Kernel
             new Doctrine\Bundle\MigrationsBundle\DoctrineMigrationsBundle(),
             new vierbergenlars\Bundle\RadRestBundle\VlRadRestBundle(),
             new Nelmio\ApiDocBundle\NelmioApiDocBundle(),
+            new KULeuven\ShibbolethBundle\ShibbolethBundle(),
             new App\AppBundle(),
             new Admin\AdminBundle(),
             new User\UserBundle(),

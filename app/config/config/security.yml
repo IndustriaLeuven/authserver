@@ -49,6 +49,7 @@ security:
 
         public:
             pattern: ^/
+            shibboleth: ~
             form_login:
                 login_path: app_login
                 check_path: app_login_check
@@ -56,6 +57,7 @@ security:
                 authenticator: app.admin.security.apikey_authenticator
             logout:
                 handlers: [app.security.logout_handler]
+                success_handler: security.logout.handler.shibboleth
             anonymous: ~
             switch_user: true
 
