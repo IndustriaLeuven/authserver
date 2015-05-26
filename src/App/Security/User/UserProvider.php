@@ -43,6 +43,9 @@ class UserProvider extends EntityUserProvider implements ShibbolethUserProviderI
             $user->setUsername($username)
                 ->setEnabled(false);
         }
+        if(!$token->isStudent('kuleuven.be')) {
+            $user->setEnabled(false);
+        }
         $user->setPasswordEnabled(0);
         $user->getPrimaryEmailAddress()
             ->setEmail($token->getMail())
