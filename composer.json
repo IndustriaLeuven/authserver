@@ -36,6 +36,12 @@
         "ircmaxell/password-compat": "~1.0",
         "kuleuven/shibboleth-bundle": "dev-master"
     },
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/IndustriaLeuven/ShibbolethBundle"
+        }
+    ],
     "scripts": {
         "post-install-cmd": [
             "Sensio\\Bundle\\DistributionBundle\\Composer\\ScriptHandler::clearCache",

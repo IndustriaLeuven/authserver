@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "a9e467e1592b51e016ace1531b15a00a",
+    "hash": "3685cff0f2566dda06cde374f00c3ccd",
     "packages": [
         {
             "name": "braincrafted/bootstrap-bundle",
@@ -2177,13 +2177,13 @@
             "target-dir": "KULeuven/ShibbolethBundle",
             "source": {
                 "type": "git",
-                "url": "https://github.com/rmoreas/ShibbolethBundle.git",
-                "reference": "67070be2a3df5995467d9fb8751110478854199f"
+                "url": "https://github.com/IndustriaLeuven/ShibbolethBundle.git",
+                "reference": "3ff705e932b1e5823f395b323021944529298670"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/rmoreas/ShibbolethBundle/zipball/67070be2a3df5995467d9fb8751110478854199f",
-                "reference": "67070be2a3df5995467d9fb8751110478854199f",
+                "url": "https://api.github.com/repos/IndustriaLeuven/ShibbolethBundle/zipball/3ff705e932b1e5823f395b323021944529298670",
+                "reference": "3ff705e932b1e5823f395b323021944529298670",
                 "shasum": ""
             },
             "type": "symfony-bundle",
@@ -2192,7 +2192,6 @@
                     "KULeuven\\ShibbolethBundle": ""
                 }
             },
-            "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "LGPL-3.0+"
             ],
@@ -2206,11 +2205,14 @@
             ],
             "description": "Symfony2 authentication provider for Shibboleth",
             "keywords": [
-                "Authentication",
+                "authentication",
                 "security",
                 "shibboleth"
             ],
-            "time": "2014-01-08 23:54:58"
+            "support": {
+                "source": "https://github.com/IndustriaLeuven/ShibbolethBundle/tree/master"
+            },
+            "time": "2015-05-26 21:37:07"
         },
         {
             "name": "michelf/php-markdown",

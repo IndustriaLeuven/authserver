@@ -9,21 +9,26 @@
                     <div class="panel-heading">
                         <h3 class="panel-title">Login</h3>
                     </div>
-                    <div class="panel-footer {%  if error %}hidden{% endif %} js-password-login">
-                        <a class="btn btn-primary btn-block" href="{{ url('app_login_shib') }}">KU Leuven Login</a>
-                        <button class="btn btn-block" onclick="$('.js-password-login').toggleClass('hidden')" type="button">Password login</button>
-                    </div>
-                    <div class="panel-body {%  if not error %}hidden{% endif %} js-password-login">
-                        {% if error %}
+                    {% if error %}
+                        <div class="panel-body">
                             <div class="alert alert-danger" role="alert">
                                 {% if error_type == "Symfony\\Component\\Security\\Core\\Exception\\LockedException" %}
                                     <p>Your email address has not yet been validated.</p>
                                     <p>If you did not receive a verification mail, you can <a class="alert-link" href="{{ url('user_email_resend', { user: last_username }) }}">resend the verification email.</a></p>
+                                {% elseif error_type == "Symfony\\Component\\Security\\Core\\Exception\\DisabledException" %}
+                                    <p>Your account is disabled.</p>
+                                    <p>Please contact an administrator to activate your account.</p>
                                 {% else %}
                                     <p>{{ error.message }}</p>
                                 {% endif %}
                             </div>
-                        {% endif %}
+                        </div>
+                    {% endif %}
+                    <div class="panel-footer {% if last_username %}hidden{% endif %} js-password-login">
+                        <a class="btn btn-primary btn-block" href="{{ url('app_login_shib') }}">KU Leuven Login</a>
+                        <button class="btn btn-block" onclick="$('.js-password-login').toggleClass('hidden')" type="button">Password login</button>
+                    </div>
+                    <div class="panel-body {% if not last_username %}hidden{% endif %} js-password-login">
                         <div class="form-group">
                             <label for="username">Username</label>
                             <input type="text" class="form-control" id="username" name="_username" value="{{ last_username }}">
@@ -33,7 +38,7 @@
                             <input type="password" class="form-control" id="password" name="_password">
                         </div>
                     </div>
-                    <div class="panel-footer text-center {%  if not error %}hidden{%  endif %} js-password-login">
+                    <div class="panel-footer text-center {% if not last_username %}hidden{% endif %} js-password-login">
                         <button class="btn btn-primary btn-block" type="submit">Login</button>
                         <button class="btn btn-block" type="reset" onclick="$('.js-password-login').toggleClass('hidden')">Cancel</button>
                     </div>

@@ -9,18 +9,24 @@ use Symfony\Component\Security\Core\SecurityContext;
 
 class SecurityController extends Controller
 {
-    public function loginAction(Request $request)
+    private function getError(Request $request)
     {
-        $session = $request->getSession();
-
         $error = null;
         // get the login error if there is one
         if ($request->attributes->has(SecurityContext::AUTHENTICATION_ERROR)) {
             $error = $request->attributes->get(SecurityContext::AUTHENTICATION_ERROR);
         } else {
-            $error = $session->get(SecurityContext::AUTHENTICATION_ERROR);
-            $session->remove(SecurityContext::AUTHENTICATION_ERROR);
+            $error = $request->getSession()->get(SecurityContext::AUTHENTICATION_ERROR);
+            $request->getSession()->remove(SecurityContext::AUTHENTICATION_ERROR);
         }
+        return $error;
+    }
+
+    public function loginAction(Request $request)
+    {
+        $session = $request->getSession();
+
+        $error = $this->getError($request);
 
         // Add the following lines
         if ($session->has('_security.target_path')) {
@@ -39,9 +45,21 @@ class SecurityController extends Controller
 
     public function shibbolethAction(Request $request)
     {
-        if(!$this->isGranted('ROLE_USER'))
-            return new RedirectResponse($this->get('shibboleth')->getLoginUrl($request));
         $session = $request->getSession();
-        return new RedirectResponse($session->get('_security.target_path', $this->generateUrl('home')));
+
+        if($this->isGranted('ROLE_USER'))
+            return new RedirectResponse($session->get('_security.target_path', $this->generateUrl('home')));
+
+        $error = $this->getError($request);
+
+        if($error === null)
+            return new RedirectResponse($this->get('shibboleth')->getLoginUrl($request));
+
+        return $this->render('AppBundle:Security:login.html.twig', array(
+            // last username entered by the user
+            'last_username' => $session->get(SecurityContext::LAST_USERNAME),
+            'error'         => $error,
+            'error_type'    => $error?get_class($error):null,
+        ));
     }
 }
