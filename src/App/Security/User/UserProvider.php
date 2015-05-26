@@ -35,9 +35,9 @@ class UserProvider extends EntityUserProvider implements ShibbolethUserProviderI
 
         $user->setDisplayName($token->getFullName());
         $username = $token->getUsername();
-        @list($user, $domain) = explode('@', $username, 2);
+        @list($localname, $domain) = explode('@', $username, 2);
         if($domain === 'kuleuven.be') {
-            $user->setUsername($user)
+            $user->setUsername($localname)
                 ->setEnabled(true);
         } else {
             $user->setUsername($username)
