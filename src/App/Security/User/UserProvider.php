@@ -19,14 +19,31 @@ class UserProvider extends EntityUserProvider implements ShibbolethUserProviderI
         parent::__construct($registry, 'AppBundle:User', 'username');
     }
 
+    public function loadUserByUsername($username)
+    {
+        @list($user, $domain) = explode('@', $username, 2);
+        if($domain === 'kuleuven.be') {
+            return parent::loadUserByUsername($user);
+        } else {
+            return parent::loadUserByUsername($username);
+        }
+    }
+
     function createUser(ShibbolethUserToken $token)
     {
         $user = $this->repo->newInstance();
 
         $user->setDisplayName($token->getFullName());
-        $user->setUsername($token->getUsername());
+        $username = $token->getUsername();
+        @list($user, $domain) = explode('@', $username, 2);
+        if($domain === 'kuleuven.be') {
+            $user->setUsername($user)
+                ->setEnabled(true);
+        } else {
+            $user->setUsername($username)
+                ->setEnabled(false);
+        }
         $user->setPasswordEnabled(0);
-        $user->setEnabled(true);
         $user->getPrimaryEmailAddress()
             ->setEmail($token->getMail())
             ->setVerified(true);
