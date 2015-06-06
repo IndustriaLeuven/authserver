@@ -9,25 +9,17 @@ use Symfony\Component\Security\Core\SecurityContext;
 
 class SecurityController extends Controller
 {
-    private function getError(Request $request)
-    {
-        $error = null;
-        // get the login error if there is one
-        if ($request->attributes->has(SecurityContext::AUTHENTICATION_ERROR)) {
-            $error = $request->attributes->get(SecurityContext::AUTHENTICATION_ERROR);
-        } else {
-            $error = $request->getSession()->get(SecurityContext::AUTHENTICATION_ERROR);
-            $request->getSession()->remove(SecurityContext::AUTHENTICATION_ERROR);
-        }
-        return $error;
-    }
-
     public function loginAction(Request $request)
     {
         $session = $request->getSession();
 
-        $error = $this->getError($request);
-
+        // get the login error if there is one
+        if ($request->attributes->has(SecurityContext::AUTHENTICATION_ERROR)) {
+            $error = $request->attributes->get(SecurityContext::AUTHENTICATION_ERROR);
+        } else {
+            $error = $session->get(SecurityContext::AUTHENTICATION_ERROR);
+            $session->remove(SecurityContext::AUTHENTICATION_ERROR);
+        }
         // Add the following lines
         if ($session->has('_security.target_path')) {
             if (false !== strpos($session->get('_security.target_path'), $this->generateUrl('fos_oauth_server_authorize'))) {
