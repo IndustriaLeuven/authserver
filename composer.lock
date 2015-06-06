@@ -819,7 +819,7 @@
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/doctrine/migrations/zipball/a4f14d3a3d397104e557ec65d1a4e43bb86e4ddf",
+                "url": "https://api.github.com/repos/doctrine/migrations/zipball/67f02686c6c779ae50489728b91026bc8199720c",
                 "reference": "1ac14fac3ced533047d8feae8edc7c283d5b8a67",
                 "shasum": ""
             },
@@ -2178,12 +2178,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/IndustriaLeuven/ShibbolethBundle.git",
-                "reference": "3ff705e932b1e5823f395b323021944529298670"
+                "reference": "5e7dfe9e7e2055443be061cfc1912e09ee7eaddb"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/IndustriaLeuven/ShibbolethBundle/zipball/3ff705e932b1e5823f395b323021944529298670",
-                "reference": "3ff705e932b1e5823f395b323021944529298670",
+                "url": "https://api.github.com/repos/IndustriaLeuven/ShibbolethBundle/zipball/5e7dfe9e7e2055443be061cfc1912e09ee7eaddb",
+                "reference": "5e7dfe9e7e2055443be061cfc1912e09ee7eaddb",
                 "shasum": ""
             },
             "type": "symfony-bundle",
@@ -2212,7 +2212,7 @@
             "support": {
                 "source": "https://github.com/IndustriaLeuven/ShibbolethBundle/tree/master"
             },
-            "time": "2015-05-26 21:37:07"
+            "time": "2015-06-06 20:09:06"
         },
         {
             "name": "michelf/php-markdown",

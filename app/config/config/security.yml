@@ -49,7 +49,8 @@ security:
 
         public:
             pattern: ^/
-            shibboleth: ~
+            shibboleth:
+                check_path: app_login_shib
             form_login:
                 login_path: app_login
                 check_path: app_login_check

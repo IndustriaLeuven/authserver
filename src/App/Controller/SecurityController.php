@@ -42,24 +42,4 @@ class SecurityController extends Controller
             'error_type'    => $error?get_class($error):null,
         ));
     }
-
-    public function shibbolethAction(Request $request)
-    {
-        $session = $request->getSession();
-
-        if($this->isGranted('ROLE_USER'))
-            return new RedirectResponse($session->get('_security.target_path', $this->generateUrl('home')));
-
-        $error = $this->getError($request);
-
-        if($error === null)
-            return new RedirectResponse($this->get('shibboleth')->getLoginUrl($request));
-
-        return $this->render('AppBundle:Security:login.html.twig', array(
-            // last username entered by the user
-            'last_username' => $session->get(SecurityContext::LAST_USERNAME),
-            'error'         => $error,
-            'error_type'    => $error?get_class($error):null,
-        ));
-    }
 }
