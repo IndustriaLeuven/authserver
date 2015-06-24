@@ -13,9 +13,11 @@ use Doctrine\Common\Persistence\ManagerRegistry;
 class UserProvider extends EntityUserProvider implements ShibbolethUserProviderInterface
 {
     private $repo;
-    public function __construct(ManagerRegistry $registry, UserRepository $repo)
+    private $shibAutoEnable;
+    public function __construct(ManagerRegistry $registry, UserRepository $repo, $shibAutoEnable)
     {
         $this->repo = $repo;
+        $this->shibAutoEnable = $shibAutoEnable;
         parent::__construct($registry, 'AppBundle:User', 'username');
     }
 
@@ -38,7 +40,7 @@ class UserProvider extends EntityUserProvider implements ShibbolethUserProviderI
         @list($localname, $domain) = explode('@', $username, 2);
         if($domain === 'kuleuven.be') {
             $user->setUsername($localname)
-                ->setEnabled(true);
+                ->setEnabled($this->shibAutoEnable);
         } else {
             $user->setUsername($username)
                 ->setEnabled(false);
