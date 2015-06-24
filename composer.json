@@ -34,8 +34,15 @@
         "doctrine/doctrine-migrations-bundle": "~1.0",
         "vierbergenlars/rad-rest-bundle": "dev-develop",
         "ircmaxell/password-compat": "~1.0",
+        "kuleuven/shibboleth-bundle": "dev-master",
         "stof/doctrine-extensions-bundle": "dev-master"
     },
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/IndustriaLeuven/ShibbolethBundle"
+        }
+    ],
     "scripts": {
         "post-install-cmd": [
             "Sensio\\Bundle\\DistributionBundle\\Composer\\ScriptHandler::clearCache",

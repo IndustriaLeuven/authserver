@@ -29,6 +29,7 @@ class AppKernel extends Kernel
             new Stof\DoctrineExtensionsBundle\StofDoctrineExtensionsBundle(),
             new vierbergenlars\Bundle\RadRestBundle\VlRadRestBundle(),
             new Nelmio\ApiDocBundle\NelmioApiDocBundle(),
+            new KULeuven\ShibbolethBundle\ShibbolethBundle(),
             new App\AppBundle(),
             new Admin\AdminBundle(),
             new User\UserBundle(),

@@ -1,0 +1,3 @@
+shibboleth:
+    session_initiator_path: /LoginKUL
+    username_attribute: eppn

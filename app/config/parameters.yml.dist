@@ -15,3 +15,5 @@ parameters:
 
     locale:            en
     secret:            ThisTokenIsNotSoSecretChangeIt
+
+    shibboleth_auto_enable_user: false

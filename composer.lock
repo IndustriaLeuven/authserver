@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "550ed4c8c428ccfc3d5e2f5d6b867ad2",
+    "hash": "0f47f1aaa62b7a4f986c6ae8b1a5300c",
     "packages": [
         {
             "name": "behat/transliterator",
@@ -2237,6 +2237,49 @@
             "time": "2014-12-12 05:04:05"
         },
         {
+            "name": "kuleuven/shibboleth-bundle",
+            "version": "dev-master",
+            "target-dir": "KULeuven/ShibbolethBundle",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/IndustriaLeuven/ShibbolethBundle.git",
+                "reference": "5e7dfe9e7e2055443be061cfc1912e09ee7eaddb"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/IndustriaLeuven/ShibbolethBundle/zipball/5e7dfe9e7e2055443be061cfc1912e09ee7eaddb",
+                "reference": "5e7dfe9e7e2055443be061cfc1912e09ee7eaddb",
+                "shasum": ""
+            },
+            "type": "symfony-bundle",
+            "autoload": {
+                "psr-0": {
+                    "KULeuven\\ShibbolethBundle": ""
+                }
+            },
+            "license": [
+                "LGPL-3.0+"
+            ],
+            "authors": [
+                {
+                    "name": "Ronny Moreas"
+                },
+                {
+                    "name": "Bert Van Gelder"
+                }
+            ],
+            "description": "Symfony2 authentication provider for Shibboleth",
+            "keywords": [
+                "authentication",
+                "security",
+                "shibboleth"
+            ],
+            "support": {
+                "source": "https://github.com/IndustriaLeuven/ShibbolethBundle/tree/master"
+            },
+            "time": "2015-06-06 20:09:06"
+        },
+        {
             "name": "michelf/php-markdown",
             "version": "1.5.0",
             "source": {
@@ -3744,6 +3787,7 @@
     "stability-flags": {
         "doctrine/migrations": 20,
         "vierbergenlars/rad-rest-bundle": 20,
+        "kuleuven/shibboleth-bundle": 20,
         "stof/doctrine-extensions-bundle": 20
     },
     "prefer-stable": false,
