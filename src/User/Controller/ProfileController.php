@@ -3,6 +3,8 @@
 namespace User\Controller;
 
 use App\Entity\EmailAddress;
+use App\Entity\Group;
+use App\Entity\OAuth\UserAuthorization;
 use App\Entity\Property;
 use App\Entity\User;
 use App\Entity\UserProperty;
@@ -10,9 +12,11 @@ use Braincrafted\Bundle\BootstrapBundle\Session\FlashMessage;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Template;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\Request;
+use User\Form\AddGroupType;
 use User\Form\AddPasswordType;
 use User\Form\ChangePasswordType;
 use User\Form\DeleteAuthorizedAppType;
+use User\Form\DeleteGroupType;
 use User\Form\EditEmailAddressType;
 use User\Form\EmailAddressType;
 
@@ -27,6 +31,7 @@ class ProfileController extends Controller
             'data'=>$this->getUser(),
             'form' => array(
                 'add_email' => $this->createForm(new EmailAddressType())->createView(),
+                'add_group' => $this->createForm(new AddGroupType($this->getUser()))->createView(),
             ),
         );
     }
@@ -43,24 +48,27 @@ class ProfileController extends Controller
     public function deleteAuthorizedAppAction(Request $request)
     {
         $form = $this->createForm(new DeleteAuthorizedAppType());
+        $user = $this->getUser();
 
         $form->handleRequest($request);
 
         if ($form->isValid()) {
             $appId = $form->get('id')->getData();
-            $client = $this->getDoctrine()
-                ->getRepository('AppBundle:OAuth\Client')
-                ->find($appId);
+            $userAuthorization = $this->getDoctrine()
+                ->getRepository('AppBundle:OAuth\UserAuthorization')
+                ->findOneBy(array(
+                    'client' => $appId,
+                    'user' => $user,
+                ));
+            /* @var $userAuthorization UserAuthorization */
 
-            if ($client && ($user = $this->getUser()) && $user instanceof User) {
-                $user->removeAuthorizedApplication($client);
+            if ($userAuthorization) {
                 $this->getDoctrine()->getManager()->beginTransaction();
-                $this->getDoctrine()->getRepository('AppBundle:User')->update($user);
                 $this->getDoctrine()->getRepository('AppBundle:OAuth\\RefreshToken')
                         ->createQueryBuilder('t')
                         ->delete()
                         ->where('t.client = :client AND t.user = :user')
-                        ->setParameter('client', $client)
+                        ->setParameter('client', $userAuthorization->getClient())
                         ->setParameter('user', $user)
                         ->getQuery()
                         ->execute();
@@ -68,10 +76,14 @@ class ProfileController extends Controller
                         ->createQueryBuilder('t')
                         ->delete()
                         ->where('t.client = :client AND t.user = :user')
-                        ->setParameter('client', $client)
+                        ->setParameter('client', $userAuthorization->getClient())
                         ->setParameter('user', $user)
                         ->getQuery()
                         ->execute();
+                $em = $this->getDoctrine()->getManagerForClass('AppBundle:OAuth\UserAuthorization');
+                $em->remove($userAuthorization);
+                $em->flush($userAuthorization);
+
                 $this->getDoctrine()->getManager()->commit();
                 $this->getFlash()->success('Authorized application has been removed');
 
@@ -268,6 +280,74 @@ class ProfileController extends Controller
 
         return $form;
     }
+
+    public function postGroupAction(Request $request)
+    {
+        $form = $this->createForm(new AddGroupType($this->getUser()));
+
+        $form->handleRequest($request);
+
+        if($form->isValid()) {
+            $group = $form->get('group')->getData();
+            /* @var $group Group */
+            if(!$group->isUserJoinable())
+                throw $this->createAccessDeniedException('This group is not user-joinable');
+            $user = $this->getUser();
+            /* @var $user User */
+            if($user->getGroups()->contains($group)) {
+                $this->getFlash()->alert('You are already a member of '.$group->getDisplayName().'.');
+                return $this->redirectToProfile();
+            }
+            $user->addGroup($group);
+            $this->getDoctrine()->getRepository('AppBundle:User')->update($user);
+            $this->getFlash()->success('You joined the group '.$group->getDisplayName().'.');
+        } else {
+            $errString = 'Problems while adding group.';
+            foreach ($form->getErrors(true) as $e) {
+                $errString.="\n".$e->getMessage();
+            }
+            $this->getFlash()->error($errString);
+        }
+
+        return $this->redirectToProfile();
+    }
+
+    /**
+     * @Template
+     * Internal action, not exposed in a route
+     */
+    public function removeGroupAction($groupId)
+    {
+        return $this->createForm(new DeleteGroupType(), array('id'=>$groupId));
+    }
+
+    public function deleteGroupAction(Request $request)
+    {
+        $form = $this->createForm(new DeleteGroupType());
+
+        $form->handleRequest($request);
+
+        if($form->isValid()) {
+            $groupId = $form->get('id')->getData();
+            $group = $this->getDoctrine()->getRepository('AppBundle:Group')->find($groupId);
+            /* @var $group Group */
+            if($group === null)
+                throw $this->createNotFoundException('This group does not exist.');
+            if(!$group->isUserLeaveable())
+                throw $this->createAccessDeniedException('This group is not user-leaveable.');
+
+            $user = $this->getUser();
+            /* @var $user User */
+            $user->removeGroup($group);
+            $this->getDoctrine()->getRepository('AppBundle:User')->update($user);
+            $this->getFlash()->success('You left the group '.$group->getDisplayName().'.');
+        } else {
+            $this->getFlash()->error('Cannot leave this group.');
+        }
+
+        return $this->redirectToProfile();
+    }
+
 
     private function redirectToProfile()
     {

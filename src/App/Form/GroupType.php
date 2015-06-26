@@ -9,13 +9,16 @@ use Doctrine\ORM\EntityRepository;
 
 class GroupType extends AbstractType
 {
-        /**
+    /**
      * @param FormBuilderInterface $builder
      * @param array                $options
      */
     public function buildForm(FormBuilderInterface $builder, array $options)
     {
-        $id = $options['data']->getId()?:0;
+        if(isset($options['data']))
+            $id = $options['data']->getId()?:0;
+        else
+            $id = 0;
         $builder
             // Disable editing of the name after the initial submission
             // If the id is set, the form is used for an edit operation
@@ -40,6 +43,19 @@ class GroupType extends AbstractType
                     'align_with_widget' => true,
                 ),
             ))
+            ->add('userJoinable', 'checkbox', array(
+                'required' => false,
+                'attr' => array(
+                    'align_with_widget' => true,
+                ),
+            ))
+            ->add('userLeaveable', 'checkbox', array(
+                'required' => false,
+                'attr' => array(
+                    'align_with_widget' => true,
+                ),
+            ))
+
             ->add('noGroups', 'checkbox', array(
                 'required' => false,
                 'label'=>'No groups can be member of this group',

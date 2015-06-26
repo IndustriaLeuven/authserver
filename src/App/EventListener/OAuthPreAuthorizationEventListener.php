@@ -2,6 +2,9 @@
 
 namespace App\EventListener;
 
+use App\Entity\OAuth\UserAuthorization;
+use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\ORM\EntityRepository;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use FOS\OAuthServerBundle\Event\OAuthEvent;
 use App\Entity\OAuth\Client;
@@ -10,11 +13,11 @@ use vierbergenlars\Bundle\RadRestBundle\Manager\ResourceManagerInterface;
 
 class OAuthPreAuthorizationEventListener implements EventSubscriberInterface
 {
-    private $resourceManager;
+    private $em;
 
-    public function __construct(ResourceManagerInterface $resourceManager)
+    public function __construct(EntityManagerInterface $em)
     {
-        $this->resourceManager = $resourceManager;
+        $this->em = $em;
     }
 
     public static function getSubscribedEvents()
@@ -27,13 +30,15 @@ class OAuthPreAuthorizationEventListener implements EventSubscriberInterface
 
     public function onPreAuthorizationProcess(OAuthEvent $event)
     {
+        $scopes = $event->getScopes()?explode(' ', $event->getScopes()):array();
         if (($client = $event->getClient())&&$client instanceof Client) {
-            if ($client->isPreApproved()) {
+            if ($client->isPreApproved()&&$this->matchesScope($scopes, $client->getPreApprovedScopes())) {
                 $event->setAuthorizedClient(true);
             }
         }
         if (($user = $event->getUser())&&$user instanceof User) {
-            if ($user->getAuthorizedApplications()->contains($client)) {
+            $authorization = $this->getAuthorization($client, $user);
+            if($authorization&&$this->matchesScope($scopes, $authorization->getScopes())) {
                 $event->setAuthorizedClient(true);
             }
         }
@@ -44,9 +49,33 @@ class OAuthPreAuthorizationEventListener implements EventSubscriberInterface
         if ($event->isAuthorizedClient()) {
             if(($client = $event->getClient())&&$client instanceof Client&&
                 ($user = $event->getUser())&&$user instanceof User) {
-                $user->addAuthorizedApplication($client);
-                $this->resourceManager->update($user);
+                $authorization = $this->getAuthorization($client, $user);
+                if($authorization === null)
+                    $authorization = new UserAuthorization($client, $user);
+                $authorization->setScopes(explode(' ', $event->getScopes()));
+                $this->em->persist($authorization);
+                $this->em->flush($authorization);
             }
         }
+    }
+
+    private function matchesScope($scopes, $restrictions)
+    {
+        return count(array_diff($scopes, $restrictions)) == 0;
+    }
+
+    /**
+     * @param Client $client
+     * @param User   $user
+     *
+     * @return UserAuthorization
+     */
+    private function getAuthorization(Client $client, User $user)
+    {
+        return $this->em->getRepository('AppBundle:OAuth\UserAuthorization')
+            ->findOneBy(array(
+                'user' => $user,
+                'client' => $client,
+            ));
     }
 }

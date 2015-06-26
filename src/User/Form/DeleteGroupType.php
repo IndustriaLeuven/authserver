@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Form;
+namespace User\Form;
 
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolverInterface;
 
-class PropertyType extends AbstractType
+class DeleteGroupType extends AbstractType
 {
     /**
      * @param FormBuilderInterface $builder
@@ -15,24 +15,14 @@ class PropertyType extends AbstractType
     public function buildForm(FormBuilderInterface $builder, array $options)
     {
         $builder
-            ->add('name', (isset($options['data'])&&$options['data']->getId())?'bs_static': 'text')
-            ->add('displayName')
-            ->add('userEditable', null, array(
-                'required' => false,
+            ->setMethod('DELETE')
+            ->add('id', 'hidden')
+            ->add('submit', 'submit', array(
+                'label'=>'Leave',
                 'attr' => array(
-                    'align_with_widget' => true,
-                ),
-
+                    'class' => 'btn-danger btn-xs',
+                )
             ))
-            ->add('required', null, array(
-                'required' => false,
-                'attr' => array(
-                    'align_with_widget' => true,
-                ),
-
-            ))
-            ->add('validationRegex')
-            ->add('submit', 'submit')
         ;
     }
 
@@ -42,7 +32,6 @@ class PropertyType extends AbstractType
     public function setDefaultOptions(OptionsResolverInterface $resolver)
     {
         $resolver->setDefaults(array(
-            'data_class' => 'App\Entity\Property'
         ));
     }
 
@@ -51,6 +40,6 @@ class PropertyType extends AbstractType
      */
     public function getName()
     {
-        return 'app_property';
+        return 'usr_group_delete';
     }
 }

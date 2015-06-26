@@ -30,7 +30,7 @@
         "doctrine/migrations": "dev-master",
         "fortawesome/font-awesome": "~4.1",
         "knplabs/knp-paginator-bundle": "~2.4",
-        "friendsofsymfony/oauth-server-bundle": "~1.4",
+        "friendsofsymfony/oauth-server-bundle": "dev-master as 1.4.2",
         "doctrine/doctrine-migrations-bundle": "~1.0",
         "vierbergenlars/rad-rest-bundle": "dev-develop",
         "ircmaxell/password-compat": "~1.0",
@@ -41,6 +41,10 @@
         {
             "type": "vcs",
             "url": "https://github.com/IndustriaLeuven/ShibbolethBundle"
+        },
+        {
+            "type": "vcs",
+            "url": "https://github.com/vierbergenlars/FOSOAuthServerBundle"
         }
     ],
     "scripts": {
