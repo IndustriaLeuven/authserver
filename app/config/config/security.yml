@@ -1,4 +1,6 @@
 security:
+    access_decision_manager:
+        strategy: unanimous
     encoders:
         App\Entity\User: bcrypt
 
@@ -58,7 +60,6 @@ security:
             form_login:
                 login_path: app_login
                 check_path: app_login_check
-            http_basic: ~
             simple_preauth:
                 authenticator: app.admin.security.apikey_authenticator
             logout:
@@ -77,8 +78,10 @@ security:
         - { path: ^/admin/oauth, role: ROLE_SUPER_ADMIN }
         - { path: ^/admin/users/properties, role: ROLE_SUPER_ADMIN }
         - { path: ^/admin/groups, methods: GET, role: ROLE_SCOPE_R_GROUP }
+        - { path: ^/admin/groups, methods: [LINK, UNLINK, PATCH], roles: [ROLE_SCOPE_W_GROUP, ROLE_API] }
         - { path: ^/admin/groups, role: ROLE_SCOPE_W_GROUP }
         - { path: ^/admin/users, methods: GET, role: ROLE_SCOPE_R_PROFILE }
+        - { path: ^/admin/users, methods: [LINK, UNLINK, PATCH], roles: [ROLE_SCOPE_W_PROFILE, ROLE_API] }
         - { path: ^/admin/users, role: ROLE_SCOPE_W_PROFILE }
         - { path: ^/admin/auditlog, role: ROLE_AUDIT }
         - { path: ^/admin, role: ROLE_ADMIN }
