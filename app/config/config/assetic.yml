@@ -2,6 +2,7 @@
 assetic:
     debug:          %kernel.debug%
     use_controller: false
+    node: /home/org/industria/bin/node
     bundles:        [ ]
     filters:
         cssrewrite: ~

@@ -1,17 +1,17 @@
 parameters:
     database_driver:   pdo_mysql
-    database_host:     127.0.0.1
+    database_host:     mysql.ulyssis.org
     database_port:     ~
-    database_name:     symfony
-    database_user:     root
+    database_name:     industria_idp
+    database_user:     industria
     database_password: ~
 
-    mailer_transport:  smtp
-    mailer_host:       127.0.0.1
+    mailer_transport:  mail
+    mailer_host:       ~
     mailer_user:       ~
     mailer_password:   ~
     mailer_encryption: ~
-    mailer_sender:     ~
+    mailer_sender:     noreply@industria.be
 
     locale:            en
     secret:            ThisTokenIsNotSoSecretChangeIt

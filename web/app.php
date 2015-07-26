@@ -14,6 +14,8 @@ $loader = new ApcClassLoader('sf2', $loader);
 $loader->register(true);
 */
 
+$_SERVER['HTTP_AUTHORIZATION'] = @$_SERVER['REDIRECT_R_HTTP_AUTHORIZATION'];
+
 Request::enableHttpMethodParameterOverride();
 $request = Request::createFromGlobals();
 
