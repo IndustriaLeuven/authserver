@@ -15,6 +15,12 @@ $loader->register(true);
 */
 
 $_SERVER['HTTP_AUTHORIZATION'] = @$_SERVER['REDIRECT_R_HTTP_AUTHORIZATION'];
+if($_SERVER['HTTP_AUTHORIZATION']) {
+    @list($auth, $b64) = explode(' ',$_SERVER['HTTP_AUTHORIZATION'], 2);
+    if(preg_match('/basic/i', $auth)) {
+        @list($_SERVER['PHP_AUTH_USER'], $_SERVER['PHP_AUTH_PW']) = explode(':', base64_decode($b64), 2);
+    }
+}
 
 Request::enableHttpMethodParameterOverride();
 $request = Request::createFromGlobals();
