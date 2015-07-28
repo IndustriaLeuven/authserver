@@ -9,8 +9,6 @@ framework:
     router:
         strict_requirements: null
 
-doctrine:
-
 monolog:
     handlers:
         main:
