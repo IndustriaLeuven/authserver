@@ -1,3 +1,4 @@
 shibboleth:
     session_initiator_path: /WAYF/kuleuven
-    username_attribute: eppn
+    username_attribute: KULAssocMigrateID
+    use_headers: false
