@@ -19,3 +19,16 @@ monolog:
             type:  stream
             path:  %kernel.logs_dir%/%kernel.environment%.log
             level: debug
+        mail:
+            type:         fingers_crossed
+            action_level: critical
+            handler:      mail_buffer
+        mail_buffer:
+            type:    buffer
+            handler: mail_send
+        mail_send:
+            type:       swift_mailer
+            from_email: systems@industria.be
+            to_email:   systems-industria@vbgn.be
+            subject:    idp.industria.be CRITICAL
+            level:      debug
