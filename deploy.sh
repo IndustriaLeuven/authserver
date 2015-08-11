@@ -12,3 +12,14 @@ php app/console braincrafted:bootstrap:install --env=prod
 php app/console doctrine:migrations:status --env=prod | grep "New Migrations:" | cut -d: -f2 |grep "^ *0" > /dev/null || \
 php app/console doctrine:migrations:migrate --env=prod
 php app/console app:maintenance -d --env=prod
+
+# Log deploy to rollbar
+ACCESS_TOKEN=02449345fe9f4044a4b3aef8413e2a7a
+ENVIRONMENT=production
+LOCAL_USERNAME=`whoami`
+REVISION=`git log -n 1 --pretty=format:"%H"`
+curl https://api.rollbar.com/api/1/deploy/ \
+  -F access_token=$ACCESS_TOKEN \
+  -F environment=$ENVIRONMENT \
+  -F revision=$REVISION \
+  -F local_username=$LOCAL_USERNAME
