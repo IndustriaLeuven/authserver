@@ -18,3 +18,5 @@ parameters:
     secret:            ThisTokenIsNotSoSecretChangeIt
 
     shibboleth_auto_enable_user: false
+
+    rollbar_access_token: ~

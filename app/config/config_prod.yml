@@ -32,3 +32,6 @@ monolog:
             to_email:   systems-industria@vbgn.be
             subject:    idp.industria.be CRITICAL
             level:      debug
+        rollbar:
+            type: rollbar
+            token: %rollbar_access_token%

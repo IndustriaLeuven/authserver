@@ -35,7 +35,8 @@
         "vierbergenlars/rad-rest-bundle": "dev-develop",
         "ircmaxell/password-compat": "~1.0",
         "kuleuven/shibboleth-bundle": "dev-master",
-        "stof/doctrine-extensions-bundle": "dev-master"
+        "stof/doctrine-extensions-bundle": "dev-master",
+        "rollbar/rollbar": "^0.15.0"
     },
     "repositories": [
         {
