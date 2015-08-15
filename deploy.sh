@@ -14,7 +14,7 @@ php app/console doctrine:migrations:migrate --env=prod
 php app/console app:maintenance -d --env=prod
 
 # Log deploy to rollbar
-ACCESS_TOKEN=02449345fe9f4044a4b3aef8413e2a7a
+ACCESS_TOKEN=$(sed /rollbar/\!d < app/config/parameters.yml | cut -d: -f2 | tr -d " \r\n")
 ENVIRONMENT=production
 LOCAL_USERNAME=`whoami`
 REVISION=`git log -n 1 --pretty=format:"%H"`
