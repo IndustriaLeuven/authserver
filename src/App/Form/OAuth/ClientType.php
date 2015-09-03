@@ -2,6 +2,7 @@
 
 namespace App\Form\OAuth;
 
+use App\Entity\GroupRepository;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolverInterface;
@@ -14,6 +15,13 @@ class ClientType extends AbstractType
      */
     public function buildForm(FormBuilderInterface $builder, array $options)
     {
+        $scopes = array(
+            'profile:username' => 'profile:username',
+            'profile:realname' => 'profile:realname',
+            'profile:groups'   => 'profile:groups',
+            'group:join'       => 'group:join',
+            'group:leave'      => 'group:leave',
+        );
         $builder
             ->add('name')
             ->add('redirectUris', 'bootstrap_collection', array(
@@ -28,13 +36,20 @@ class ClientType extends AbstractType
                 ),
             ))
             ->add('preApprovedScopes', 'choice', array(
-                'choices' => array(
-                    'profile:username' => 'profile:username',
-                    'profile:realname' => 'profile:realname',
-                    'profile:groups'   => 'profile:groups',
-                    'group:join'       => 'group:join',
-                    'group:leave'      => 'group:leave',
-                ),
+                'choices' => $scopes,
+                'multiple' => true,
+                'expanded' => true,
+            ))
+            ->add('groupRestriction', 'entity', array(
+                'class' => 'AppBundle:Group',
+                'query_builder' => function(GroupRepository $repository) {
+                    return $repository->createQueryBuilder('g')->where('g.exportable = true');
+                },
+                'property' => 'name',
+                'required' => false,
+            ))
+            ->add('maxScopes', 'choice', array(
+                'choices' => $scopes,
                 'multiple' => true,
                 'expanded' => true,
             ))

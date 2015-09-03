@@ -2,6 +2,7 @@
 
 namespace App\Entity\OAuth;
 
+use App\Entity\Group;
 use FOS\OAuthServerBundle\Entity\Client as BaseClient;
 use Doctrine\ORM\Mapping as ORM;
 use Gedmo\Mapping\Annotation as Gedmo;
@@ -26,6 +27,13 @@ class Client extends BaseClient
     private $name;
 
     /**
+     * @ORM\ManyToOne(targetEntity="App\Entity\Group")
+     * @ORM\JoinColumn(nullable=true)
+     * @Gedmo\Versioned
+     */
+    private $groupRestriction;
+
+    /**
      * @ORM\Column(type="boolean")
      * @Gedmo\Versioned
      */
@@ -36,6 +44,12 @@ class Client extends BaseClient
      * @Gedmo\Versioned
      */
     private $preApprovedScopes = array();
+
+    /**
+     * @ORM\Column(type="simple_array", nullable=true)
+     * @Gedmo\Versioned
+     */
+    private $maxScopes = array();
 
     /**
      * @Gedmo\Versioned
@@ -81,6 +95,42 @@ class Client extends BaseClient
     {
         $this->preApprovedScopes = $preApprovedScopes;
 
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getMaxScopes()
+    {
+        return $this->maxScopes;
+    }
+
+    /**
+     * @param mixed $maxScopes
+     * @return Client
+     */
+    public function setMaxScopes($maxScopes)
+    {
+        $this->maxScopes = $maxScopes;
+        return $this;
+    }
+
+    /**
+     * @return Group
+     */
+    public function getGroupRestriction()
+    {
+        return $this->groupRestriction;
+    }
+
+    /**
+     * @param Group $groupRestriction
+     * @return Client
+     */
+    public function setGroupRestriction(Group $groupRestriction = null)
+    {
+        $this->groupRestriction = $groupRestriction;
         return $this;
     }
 }
