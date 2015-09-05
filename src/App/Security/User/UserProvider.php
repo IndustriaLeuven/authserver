@@ -50,7 +50,7 @@ class UserProvider extends EntityUserProvider implements ShibbolethUserProviderI
         }
         $user->setPasswordEnabled(0);
 
-        if($token->hasAttribute('email')) {
+        if($token->hasAttribute('mail')) {
             $user->getPrimaryEmailAddress()
                 ->setEmail($token->getMail())
                 ->setVerified(true);
