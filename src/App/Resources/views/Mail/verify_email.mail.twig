@@ -1,6 +1,6 @@
 {% block subject %}Industria account email confirmation{% endblock %}
 {% block body_html %}
-    <p>Hello {{ data.user.realname }},</p>
+    <p>Hello {{ data.user.displayName }},</p>
     <p>Please confirm this email address for your Industria account by clicking on the link below:</p>
     <p><a href="{{ url('user_email_verify', {id: data.id, verificationCode: data.verificationCode }) }}">
             {{ url('user_email_verify', {id: data.id, verificationCode: data.verificationCode }) }}
@@ -10,7 +10,7 @@
         pc@industria.be</p>
 {% endblock %}
 {% block body_text %}
-Hello {{ data.user.realname }},
+Hello {{ data.user.displayName }},
 
 Please confirm this email address for your Industria account by clicking on the link below:
 {{ url('user_email_verify', {id: data.id, verificationCode: data.verificationCode }) }}
