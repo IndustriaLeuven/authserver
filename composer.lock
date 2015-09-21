@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "222649bdcdb3a3ad25698a7ce58e208b",
+    "hash": "24080a7c4bc4b5cfaf2aba2c7104e7b1",
     "packages": [
         {
             "name": "behat/transliterator",
@@ -904,7 +904,7 @@
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/doctrine/migrations/zipball/ed26638d87b8d4f726e97536689c8fe8d9a10f14",
+                "url": "https://api.github.com/repos/doctrine/migrations/zipball/6c527d8ccbccec5257bb2c92bca973653b1e3976",
                 "reference": "43619782df4e9ae6be6b24557f0429471eeee848",
                 "shasum": ""
             },
@@ -2249,12 +2249,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/IndustriaLeuven/ShibbolethBundle.git",
-                "reference": "5e7dfe9e7e2055443be061cfc1912e09ee7eaddb"
+                "reference": "3d6ce8293a0f261a0aad2554f859d1a5450daf7b"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/IndustriaLeuven/ShibbolethBundle/zipball/5e7dfe9e7e2055443be061cfc1912e09ee7eaddb",
-                "reference": "5e7dfe9e7e2055443be061cfc1912e09ee7eaddb",
+                "url": "https://api.github.com/repos/IndustriaLeuven/ShibbolethBundle/zipball/3d6ce8293a0f261a0aad2554f859d1a5450daf7b",
+                "reference": "3d6ce8293a0f261a0aad2554f859d1a5450daf7b",
                 "shasum": ""
             },
             "type": "symfony-bundle",
@@ -2283,7 +2283,7 @@
             "support": {
                 "source": "https://github.com/IndustriaLeuven/ShibbolethBundle/tree/master"
             },
-            "time": "2015-06-06 20:09:06"
+            "time": "2015-09-21 18:52:51"
         },
         {
             "name": "michelf/php-markdown",
