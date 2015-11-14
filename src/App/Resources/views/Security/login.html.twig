@@ -26,7 +26,7 @@
                     {% endif %}
                     <div class="panel-footer {% if last_username %}hidden{% endif %} js-password-login">
                         <a class="btn btn-primary btn-block" href="{{ url('app_login_shib') }}">KU Leuven Login</a>
-                        <button class="btn btn-block" onclick="$('.js-password-login').toggleClass('hidden')" type="button">Password login</button>
+                        <button class="btn btn-default btn-block" onclick="$('.js-password-login').toggleClass('hidden')" type="button">Password login</button>
                     </div>
                     <div class="panel-body {% if not last_username %}hidden{% endif %} js-password-login">
                         <div class="form-group">
@@ -40,7 +40,7 @@
                     </div>
                     <div class="panel-footer text-center {% if not last_username %}hidden{% endif %} js-password-login">
                         <button class="btn btn-primary btn-block" type="submit">Login</button>
-                        <button class="btn btn-block" type="reset" onclick="$('.js-password-login').toggleClass('hidden')">Cancel</button>
+                        <button class="btn btn-default btn-block" type="reset" onclick="$('.js-password-login').toggleClass('hidden')">Cancel</button>
                         <a class="btn btn-link btn-sm pull-right" href="{{ url('user_password_forgot', {user: last_username}) }}">Forgot password?</a>
                         <div class="clearfix"></div>
                     </div>
