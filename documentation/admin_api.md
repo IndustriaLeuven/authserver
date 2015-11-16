@@ -103,7 +103,7 @@ are dependent on the type of resource being filtered.
 
 Pagination links are automatically adjusted to paginate this filtered resultset.
 
-    GET /admin/users.json?q[username]=a*
+    GET /admin/users.json?q[username]=a%
     
     {
         "page":1,
@@ -119,7 +119,7 @@ Pagination links are automatically adjusted to paginate this filtered resultset.
         "total":"26",
         "_links":{
             "next":{
-                "href":"\/admin\/users?q%5Bname%5D=abc&page=2"
+                "href":"\/admin\/users?q%5Bname%5D=a%25&page=2"
             }
         }
     }
@@ -182,9 +182,9 @@ This resource is paginated and searchable.
 
 | Parameter | Value(s)                        | Description |
 | --------- | ------------------------------- | ----------- |
-| `is`      | `user`, `admin` or `superadmin` | Shows users based on their role. `user` does not include admins, `admin` includes admins and superadmins, `superadmin` only includes superadmins. |
-| `is`      | `enabled`, `disabled`           | Shows enabled or disabled users only. |
-| `username`| Anything                        | Shows users based on their full username. Wildcards (`*`) are allowed everywhere. |
+| `is[]`    | `user`, `admin` or `superadmin` | Shows users based on their role. `user` does not include admins, `admin` includes admins and superadmins, `superadmin` only includes superadmins. |
+| `is[]`    | `enabled`, `disabled`           | Shows enabled or disabled users only. |
+| `username`| Anything                        | Shows users based on their full username. Wildcards (`%`) are allowed everywhere. |
 | `name`    | Anything                        | Shows users based on their full name (`display_name`). Wildcards are allowed everywhere. |
 | `email`   | Anything                        | Shows user based on one of their email addresses (both verified and unverified) |
 
@@ -236,7 +236,6 @@ A more detailed overview of a user.
 | -------------- | ---------------------- | ----------- |
 | `email`        | `Profile::read::email` | The primary email address of the user. (may not be verified, may not be present) |
 | `non-locked`   | `Profile::read`        | If the user account is not locked due to lack of verified primary email address. |
-| `properties`   | `Profile::read`        | Extra properties that are attached to the user. Empty properties are omitted and if all properties are empty, the key is omitted too. |
 | `guid`         | `Profile::read`        | The globally-unique identifier of a user. Is guaranteed unique within one installation, and should be unique across different installations. This value does not change after user creation. |
 | `username`     | `Profile::read`        | The username of the user. Is guaranteed to be unique within one installation, but may be changed after user creation and may be reassigned to another user. |
 | `display_name` | `Profile::read`        | The real name of the user, which should be used to address the user. May not be unique within one installation and may be changed after user creation. |
@@ -249,9 +248,6 @@ A more detailed overview of a user.
     {
         "email":"15057@vbgn.be",
         "non-locked":false,
-        "properties":{
-            "number":"85"
-        },
         "guid":"A0C9A429-D3D0-4070-B59F-6E3DDD40A9AB",
         "username":"a159d29s",
         "display_name":"abc",
@@ -290,13 +286,6 @@ A more detailed overview of a user.
 | `/admin/users/{guid}/enable`              | `Profile::write::lock`     | Enables the user |
 
 Validation errors that occur on these URLs are handled the same way as errors that occur on complete forms.
-
-### `PATCH /admin/users/{guid}/property/{property}`
-
-Sets a property of the user to the contents of the request body.
-
-If the property with that name does not exist, a 404 error is returned.
-If the data submitted for the property does not match the validation regex, a 400 error is returned.
 
 ### `DELETE /admin/users/{guid}`
 
@@ -410,15 +399,15 @@ This resource is paginated and searchable.
 
 #### Search parameters
 
-| Parameter | Value(s)                        | Description |
-| --------- | ------------------------------- | ----------- |
-| `is`      | `exportable`, `noexportable`    | Shows only exportable or non exportable groups. |
-| `is`      | `nousers`, `users`              | Shows only groups that do not accept users to be a direct member of them, or only groups that do accept users. |
-| `is`      | `nogroups`, `groups`            | Shows only groups that do not accept groups to be a direct member of them, or only groups that do accept groups. |
-| `is`      | `userjoin`, `nouserjoin`        | Shows only groups that allow users to join the group by themselves, or only groups that do not accept users to join by themselves. |
-| `is`      | `userleave`, `nouserleave`      | Shows only groups that allow users to leave the group by themselves, or only groups that do not accept users to leave by themselves. |
-| `techname`| Anything                        | Shows users based on their internal, technical name (`name`). Wildcards (`*`) are allowed everywhere. |
-| `name`    | Anything                        | Shows users based on their friendly name (`display_name`). Wildcards are allowed everywhere. |
+| Parameter   | Value(s) | Description |
+| ----------- | -------- | ----------- |
+| `exportable`| `0`,`1`  | Shows only exportable or non exportable groups. |
+| `users`     | `0`,`1`  | Shows only groups that do not accept users to be a direct member of them, or only groups that do accept users. |
+| `groups`    | `0`,`1`  | Shows only groups that do not accept groups to be a direct member of them, or only groups that do accept groups. |
+| `userjoin`  | `0`,`1`  | Shows only groups that allow users to join the group by themselves, or only groups that do not accept users to join by themselves. |
+| `userleave` | `0`,`1`  | Shows only groups that allow users to leave the group by themselves, or only groups that do not accept users to leave by themselves. |
+| `techname`  | Anything | Shows users based on their internal, technical name (`name`). Wildcards (`%`) are allowed everywhere. |
+| `name`      | Anything | Shows users based on their friendly name (`display_name`). Wildcards are allowed everywhere. |
 
 #### Resource object
 

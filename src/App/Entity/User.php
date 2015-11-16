@@ -11,8 +11,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 
 /**
  * @ORM\Table(name="auth_users")
- * @ORM\Entity(repositoryClass="UserRepository")
- * @ORM\HasLifecycleCallbacks
+ * @ORM\Entity
  * @Gedmo\Loggable
  */
 class User implements AdvancedUserInterface, \Serializable
@@ -62,7 +61,7 @@ class User implements AdvancedUserInterface, \Serializable
     /**
      * @var EmailAddress[]
      *
-     * @ORM\OneToMany(targetEntity="EmailAddress", mappedBy="user", cascade={"ALL"}, orphanRemoval=true)
+     * @ORM\OneToMany(targetEntity="EmailAddress", mappedBy="user", cascade={"persist", "remove"}, orphanRemoval=true)
      */
     private $emailAddresses;
 
@@ -98,20 +97,6 @@ class User implements AdvancedUserInterface, \Serializable
      */
     private $authorizedApplications;
 
-    /**
-     * @var UserProperty[]
-     *
-     * @ORM\OneToMany(targetEntity="UserProperty", mappedBy="user", cascade={"ALL"})
-     */
-    private $userProperties;
-
-    /**
-     * Temporary storage for user properties persist hack
-     * @see __rescueUserProperties__()
-     * @internal
-     */
-    private $__userProperties__;
-
     public function __construct()
     {
         $this->role = 'ROLE_USER';
@@ -119,7 +104,6 @@ class User implements AdvancedUserInterface, \Serializable
         $this->groups = new ArrayCollection();
         $this->authorizedApplications = new ArrayCollection();
         $this->emailAddresses = new ArrayCollection();
-        $this->userProperties = new ArrayCollection();
     }
 
     public function getUsername()
@@ -370,6 +354,7 @@ class User implements AdvancedUserInterface, \Serializable
      */
     public function addEmailAddress(\App\Entity\EmailAddress $emailAddresses)
     {
+        $emailAddresses->setUser($this);
         $this->emailAddresses[] = $emailAddresses;
 
         return $this;
@@ -462,51 +447,5 @@ class User implements AdvancedUserInterface, \Serializable
         $this->passwordResetToken = null;
 
         return $this;
-    }
-
-    public function getUserProperties()
-    {
-        return $this->userProperties;
-    }
-
-    public function getUserPropertiesMap()
-    {
-        $map = array();
-        foreach ($this->userProperties as $property) {
-            $map[$property->getProperty()->getName()] = $property->getData();
-        }
-
-        return $map;
-    }
-
-    /**
-     * Hack to get the user properties out of the persist loop when this entity
-     * itself is persisted.
-     * This is required becaue the user properies have a composite primary key,
-     * which consists of this entity id (unknown until a flush happens) and the property entity id.
-     * Doctrine needs to know the id of this entity before the user properties entities can be
-     * persisted, but it also requires all entities in the mapped collection to be persisted
-     * before, or together with the main entity that is persisted.
-     * The result of this is an unsatisfiable condition, since only persisted entities can
-     * be flushed to the database. That is why the user properties collection gets copied
-     * to a temporary variable before persisting, en gets restored after persisting.
-     *
-     * @internal
-     * @ORM\PrePersist
-     */
-    public function __rescueUserProperties__()
-    {
-        $this->__userProperties__ = $this->userProperties;
-        $this->userProperties = null;
-    }
-
-    /**
-     * @see __rescueUserProperties__()
-     * @internal
-     * @ORM\PostPersist
-     */
-    public function __restoreUserProperties__()
-    {
-        $this->userProperties = $this->__userProperties__;
     }
 }

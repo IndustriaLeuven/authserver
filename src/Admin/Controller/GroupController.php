@@ -2,29 +2,35 @@
 
 namespace Admin\Controller;
 
-use Admin\Controller\Traits\Routes\LinkUnlinkTrait;
 use App\Entity\Group;
 use App\Entity\GroupRepository;
+use App\Form\GroupType;
+use Doctrine\ORM\EntityRepository;
 use FOS\RestBundle\Controller\Annotations\Get;
-use FOS\RestBundle\Controller\Annotations\View as AView;
+use FOS\RestBundle\Controller\Annotations\Post;
+use FOS\RestBundle\Controller\Annotations\View;
+use FOS\RestBundle\Util\Codes;
 use Nelmio\ApiDocBundle\Annotation\ApiDoc;
+use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Form;
+use Symfony\Component\Form\FormFactoryInterface;
+use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
-use Symfony\Component\HttpKernel\Exception\HttpException;
-use vierbergenlars\Bundle\RadRestBundle\Doctrine\QueryBuilderPageDescription;
-use vierbergenlars\Bundle\RadRestBundle\View\View;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 
-class GroupController extends DefaultController
+/**
+ * @ParamConverter("group",options={"mapping":{"group":"name"}})
+ */
+class GroupController extends CRUDController
 {
-    use LinkUnlinkTrait;
-
     /**
      * @ApiDoc
      */
-    public function flagsAction(Request $request, Group $id)
+    public function flagsAction(Request $request, Group $group)
     {
-        $form = $this->getFormFactory()->createNamedBuilder('', 'form', $id)
+        $form = $this->get('form.factory')
+            ->createNamedBuilder('', 'form', $group)
             ->add('exportable', 'choice', array(
                 'choices' => array(false => 0, true => 1)
             ))
@@ -49,53 +55,105 @@ class GroupController extends DefaultController
         if(!$form->isValid())
             return $form;
 
-        $this->getResourceManager()->update($id);
+        $this->getEntityManager()->flush();
+
         return null;
     }
 
     /**
      * @ApiDoc
      */
-    public function displaynameAction(Request $request, Group $id)
+    public function displaynameAction(Request $request, Group $group)
     {
-        $form = $this->createEditForm($id);
+        $form = $this->createEditForm($group);
         $form->submit(array('displayName' => $request->getContent()), false);
         if(!$form->isValid())
             return $form->get('displayName');
-        $this->getResourceManager()->update($id);
+        $this->getEntityManager()->flush();
         return null;
     }
 
-    protected function handleLink($type, $parent, $link)
+    /**
+     * @Get(path="/{group}/members")
+     * @View(serializerGroups={"admin_group_list_members","list"})
+     * @ApiDoc
+     */
+    public function getMembersAction(Request $request, Group $group)
     {
-        switch ($type) {
-            case 'group':
-                $group = $link->getData();
-                if (!$group instanceof Group) {
-                    throw new BadRequestHttpException('Subresource of wrong type (expected: group)');
-                }
-                if (!$parent->getGroups()->contains($group)) {
-                    $parent->addGroup($group);
-                }
-                break;
-            default:
-                throw new BadRequestHttpException('Invalid relationship (allowed: group)');
-        }
+        /* @var $group Group */
+        $repo  = $this->getEntityManager()->getRepository('AppBundle:Group');
+
+        /* @var $repo GroupRepository */
+        $members = $repo->getMembersQueryBuilder($group, $request->query->has('all'));
+
+        $pagination = $this->paginate($members, $request);
+        return $this->view($pagination)->setTemplateData(array(
+            'group' => $group,
+        ));
     }
 
-    protected function handleUnlink($type, $parent, $link)
+    /**
+     * @ApiDoc
+     * @View(serializerGroups={"admin_group_list", "list"})
+     * @Get(name="s")
+     */
+    public function cgetAction(Request $request)
     {
-        switch ($type) {
-            case 'group':
-                $group = $link->getData();
-                if (!$group instanceof Group) {
-                    throw new BadRequestHttpException('Subresource of wrong type (expected: group)');
-                }
-                $parent->removeGroup($group);
-                break;
-            default:
-                throw new BadRequestHttpException('Invalid relationship (allowed: group)');
+        $queryBuilder = $this->getEntityManager()
+            ->getRepository('AppBundle:Group')
+            ->createQueryBuilder('g')
+            ->orderBy('g.id', 'DESC');
+
+        $searchForm = $this->createSearchForm()->handleRequest($request);
+
+        if($searchForm->isValid()) {
+            if(!$searchForm->get('name')->isEmpty())
+                $queryBuilder->andWhere('g.displayName LIKE :displayName')
+                    ->setParameter('displayName', $searchForm->get('name')->getData());
+            if(!$searchForm->get('techname')->isEmpty())
+                $queryBuilder->andWhere('g.name LIKE :name')
+                    ->setParameter('name', $searchForm->get('techname')->getData());
+            if($searchForm->get('exportable')->getData() !== null)
+                $queryBuilder->andWhere('g.exportable = :exportable')
+                    ->setParameter('exportable', !!$searchForm->get('exportable')->getData());
+            if($searchForm->get('groups')->getData() !== null)
+                $queryBuilder->andWhere('g.noGroups = :noGroups')
+                    ->setParameter('noGroups', !$searchForm->get('groups')->getData());
+            if($searchForm->get('users')->getData() !== null)
+                $queryBuilder->andWhere('g.noUsers = :noUsers')
+                    ->setParameter('noUsers', !$searchForm->get('users')->getData());
+            if($searchForm->get('userjoin')->getData() !== null)
+                $queryBuilder->andWhere('g.userJoinable = :userJoinable')
+                    ->setParameter('userJoinable', !!$searchForm->get('userjoin')->getData());
+            if($searchForm->get('userleave')->getData() !== null)
+                $queryBuilder->andWhere('g.userLeaveable = :userLeaveable')
+                    ->setParameter('userLeaveable', !!$searchForm->get('userleave')->getData());
         }
+
+        return $this->view($this->paginate($queryBuilder, $request))
+            ->setTemplateData(array(
+                'batch_form'=>$this->createBatchForm()->createView(),
+                'search_form' => $searchForm->createView(),
+            ));
+    }
+
+    /**
+     * @ApiDoc
+     * @View(serializerGroups={"admin_group_object", "object"})
+     */
+    public function getAction(Group $group)
+    {
+        return $group;
+    }
+
+    /**
+     * @Post
+     */
+    public function batchAction(Request $request)
+    {
+        $this->handleBatch($request);
+
+        return $this->routeRedirectView('admin_group_gets');
     }
 
     protected function getBatchActions()
@@ -116,40 +174,166 @@ class GroupController extends DefaultController
     }
 
     /**
-     * @Get(path="/{id}/members")
-     * @AView
+     * @View
      */
-    public function getMembersAction(Request $request, $id)
+    public function editAction(Group $group)
     {
-        $group = $this->getAction($id)->getData();
-        /* @var $group Group */
-        $repo  = $this->getResourceManager();
-
-        if (!$repo instanceof GroupRepository) {
-            throw new HttpException(503);
-        }
-        /* @var $repo GroupRepository */
-        $members = $repo->getMembersQueryBuilder($group, $request->query->has('all'));
-        $pageDescription = new QueryBuilderPageDescription($members);
-        $view = View::create($this->getPagination($pageDescription, $request->query->get('page', 1), $request->query->get('per_page', 10)));
-        $view->setExtraData(array(
-            'group' => $group,
-        ));
-        $view->getSerializationContext()->setGroups($this->getSerializationGroups('get_members'));
-
-        return $this->handleView($view);
+        return $this->createEditForm($group);
     }
 
-    public function getSerializationGroups($action)
+    /**
+     * @View(template="AdminBundle:Group:edit.html.twig")
+     */
+    public function putAction(Request $request, Group $group)
     {
-        switch($action) {
-            case 'get_members':
-                return array(
-                    'admin_group_list_members',
-                    'list',
-                );
-            default:
-                return parent::getSerializationGroups($action);
-        }
+        $form = $this->createEditForm($group);
+        $form->handleRequest($request);
+
+        if(!$form->isValid())
+            return $form;
+
+        $this->getEntityManager()->flush();
+
+        return $this->routeRedirectView('admin_group_get', array('group'=>$group->getName()), Codes::HTTP_NO_CONTENT);
+    }
+
+    /**
+     * @View
+     */
+    public function newAction()
+    {
+        return $this->createCreateForm();
+    }
+
+    /**
+     * @View(template="AdminBundle:Group:new.html.twig")
+     */
+    public function postAction(Request $request)
+    {
+        $form = $this->createCreateForm();
+        $form->handleRequest($request);
+
+        if(!$form->isValid())
+            return $form;
+
+        $this->getEntityManager()->persist($form->getData());
+        $this->getEntityManager()->flush();
+
+        return $this->routeRedirectView('admin_group_get', array('group'=>$form->getData()->getName()));
+    }
+
+    /**
+     * @View
+     */
+    public function removeAction(Group $group)
+    {
+        return $this->createDeleteForm();
+    }
+
+    /**
+     * @View(template="AdminBundle:Group:remove.html.twig")
+     */
+    public function deleteAction(Request $request, Group $group)
+    {
+        $ret = $this->handleDelete($request, $group);
+        if($ret)
+            return $ret;
+
+        return $this->routeRedirectView('admin_group_gets', array(), Codes::HTTP_NO_CONTENT);
+    }
+
+    public function linkAction(Request $request, Group $group)
+    {
+        $this->handleLink($request, array(
+            'group' => function($parent) use ($group) {
+                if(!$parent instanceof Group)
+                    throw new BadRequestHttpException('Subresource of wrong type (expected: group)');
+                if(!$group->getGroups()->contains($parent))
+                    $group->addGroup($parent);
+            }
+        ));
+        $this->getEntityManager()->flush();
+    }
+
+    public function unlinkAction(Request $request, Group $group)
+    {
+        $this->handleLink($request, array(
+            'group' => function($parent) use ($group) {
+                if(!$parent instanceof Group)
+                    throw new BadRequestHttpException('Subresource of wrong type (expected: group)');
+                $group->removeGroup($parent);
+            }
+        ));
+        $this->getEntityManager()->flush();
+    }
+
+    /**
+     * @return EntityRepository
+     */
+    protected function getEntityRepository()
+    {
+        return $this->getEntityManager()->getRepository('AppBundle:Group');
+    }
+
+    /**
+     * @return AbstractType
+     */
+    protected function getFormType()
+    {
+        return new GroupType();
+    }
+
+    protected function createNewEntity()
+    {
+        return new Group();
+    }
+
+    /**
+     * @return FormInterface
+     */
+    private function createSearchForm()
+    {
+        $ff = $this->get('form.factory');
+        /* @var $ff FormFactoryInterface */
+        return $ff->createNamedBuilder('q', 'form', null, array(
+            'csrf_protection' => false,
+            'allow_extra_fields' => true
+        ))
+            ->setMethod('GET')
+            ->add('name', 'text', array(
+                'required' => false,
+            ))
+            ->add('techname', 'text', array(
+                'required' => false,
+            ))
+            ->add('exportable', 'choice', array(
+                'choices' => array(0=>'No', 1=>'Yes'),
+                'expanded' => true,
+                'required' => false,
+            ))
+            ->add('groups', 'choice', array(
+                'choices' => array(0=>'No', 1=>'Yes'),
+                'expanded' => true,
+                'required' => false,
+            ))
+            ->add('users', 'choice', array(
+                'choices' => array(0=>'No', 1=>'Yes'),
+                'expanded' => true,
+                'required' => false,
+            ))
+            ->add('userjoin', 'choice', array(
+                'choices' => array(0=>'No', 1=>'Yes'),
+                'label' => 'User joinable',
+                'expanded' => true,
+                'required' => false,
+            ))
+            ->add('userleave', 'choice', array(
+                'choices' => array(0=>'No', 1=>'Yes'),
+                'label' => 'User leaveable',
+                'expanded' => true,
+                'required' => false,
+            ))
+            ->add('search', 'submit')
+            ->getForm();
     }
 }

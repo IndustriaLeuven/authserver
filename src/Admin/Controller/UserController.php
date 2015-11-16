@@ -2,213 +2,127 @@
 
 namespace Admin\Controller;
 
+use Admin\Form\EventListener\UserTypeLocalFlagsEventListener;
 use App\Entity\Group;
-use Admin\Controller\Traits\Routes\LinkUnlinkTrait;
 use App\Entity\User;
-use App\Entity\UserProperty;
-use Symfony\Component\Form\Form;
-use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
-use vierbergenlars\Bundle\RadRestBundle\Manager\SecuredResourceManager;
-use Admin\Security\DefaultAuthorizationChecker;
-use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
-use Symfony\Component\Security\Core\Exception\AccessDeniedException;
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
-use FOS\RestBundle\Controller\Annotations\Patch;
+use App\Form\UserType;
+use Doctrine\ORM\EntityRepository;
+use FOS\RestBundle\Util\Codes;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 use Nelmio\ApiDocBundle\Annotation\ApiDoc;
+use FOS\RestBundle\Controller\Annotations\View;
+use FOS\RestBundle\Controller\Annotations\Get;
+use FOS\RestBundle\Controller\Annotations\Post;
+use FOS\RestBundle\Controller\Annotations\Patch;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
+use Symfony\Component\Form\FormFactoryInterface;
+use Symfony\Component\Form\FormInterface;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 
-class UserController extends DefaultController
+/**
+ * @ParamConverter("user",options={"mapping":{"user":"guid"}})
+ */
+class UserController extends CRUDController
 {
-    use LinkUnlinkTrait;
-
     /**
      * @ApiDoc
-     * @Security("(has_role('ROLE_SCOPE_W_PROFILE_ENABLED') and id.getRole() not in ['ROLE_ADMIN', 'ROLE_SUPER_ADMIN']) or has_role('ROLE_SCOPE_W_PROFILE_ENABLED_ADMIN')")
+     * @View(serializerGroups={"admin_user_list", "list"})
+     * @Get(name="s")
      */
-    public function enableAction(User $id)
-    {
-        $id->setEnabled(true);
-        $this->getResourceManager()->update($id);
-    }
+    public function cgetAction(Request $request) {
+        $queryBuilder = $this->getEntityManager()
+            ->getRepository('AppBundle:User')
+            ->createQueryBuilder('u')
+            ->orderBy('u.id', 'DESC');
 
-    /**
-     * @ApiDoc
-     * @Security("(has_role('ROLE_SCOPE_W_PROFILE_ENABLED') and id.getRole() not in ['ROLE_ADMIN', 'ROLE_SUPER_ADMIN']) or has_role('ROLE_SCOPE_W_PROFILE_ENABLED_ADMIN')")
-     */
-    public function disableAction(User $id)
-    {
-        $id->setEnabled(false);
-        $this->getResourceManager()->update($id);
-    }
+        $searchForm = $this->createSearchForm()->handleRequest($request);
 
-    /**
-     * @ApiDoc
-     * @Patch("/{id}/property/{property}")
-     */
-    public function propertyAction(Request $request, User $id, $property)
-    {
-        $userProperty = $id->getUserProperties()->filter(function(UserProperty $up) use($property){
-            return $up->getProperty()->getName() === $property;
-        })->first();
-        /* @var $userProperty UserProperty */
-        if($userProperty === null)
-            throw new NotFoundHttpException;
-
-        $regex = $userProperty->getProperty()->getValidationRegex();
-        $value = $request->getContent();
-        if(!preg_match($regex, $value))
-            throw new BadRequestHttpException('The given value does not match '.$regex);
-        $userProperty->setData($value);
-        $this->getResourceManager()->update($id);
-    }
-
-    /**
-     * @ApiDoc
-     * @Security("has_role('ROLE_SCOPE_W_PROFILE_ADMIN')")
-     */
-    public function roleAction(Request $request, User $id)
-    {
-        return $this->processOtherField($request, $id, 'role');
-    }
-
-    /**
-     * @ApiDoc
-     * @Security("has_role('ROLE_SCOPE_W_PROFILE_USERNAME')")
-     */
-    public function usernameAction(Request $request, User $id)
-    {
-        return $this->processOtherField($request, $id, 'username');
-    }
-
-    /**
-     * @ApiDoc
-     */
-    public function displaynameAction(Request $request, User $id)
-    {
-        return $this->processOtherField($request, $id, 'displayName');
-    }
-
-    /**
-     * @ApiDoc
-     * @Security("has_role('ROLE_SCOPE_W_PROFILE_CRED')")
-     */
-    public function passwordAction(Request $request, User $id)
-    {
-        return $this->processOtherField($request, $id, 'password');
-    }
-
-    /**
-     * @ApiDoc
-     * @Patch("/{id}/password/disable")
-     * @Security("has_role('ROLE_SCOPE_W_PROFILE_CRED')")
-     */
-    public function passwordDisableAction(User $id)
-    {
-        $id->setPasswordEnabled(0);
-        $this->getResourceManager()->update($id);
-    }
-
-    /**
-     * @ApiDoc
-     * @Patch("/{id}/password/enable")
-     * @Security("has_role('ROLE_SCOPE_W_PROFILE_CRED')")
-     */
-    public function passwordEnableAction(Request $request, User $id)
-    {
-        $id->setPasswordEnabled(1);
-        $this->getResourceManager()->update($id);
-    }
-
-    /**
-     * @ApiDoc
-     * @Patch("/{id}/password/settable")
-     * @Security("has_role('ROLE_SCOPE_W_PROFILE_CRED')")
-     */
-    public function passwordInitialAction(Request $request, User $id)
-    {
-        $id->setPasswordEnabled(2);
-        $this->getResourceManager()->update($id);
-    }
-
-    private function processOtherField(Request $request, User $user, $field)
-    {
-        $form = $this->createEditForm($user);
-        $form->submit(array($field => $request->getContent()), false);
-        if(!$form->isValid())
-            return $form->get($field);
-        $this->getResourceManager()->update($user);
-        return null;
-    }
-
-    protected function handleLink($type, $user, $link)
-    {
-        switch ($type) {
-            case 'group':
-                if (!$this->hasRole('ROLE_SCOPE_W_PROFILE_GROUPS')) {
-                    throw new AccessDeniedException();
+        if($searchForm->isValid()) {
+            if (!$searchForm->get('username')->isEmpty())
+                $queryBuilder->andWhere('u.username LIKE :username')
+                    ->setParameter('username', $searchForm->get('username')->getData());
+            if (!$searchForm->get('name')->isEmpty())
+                $queryBuilder->andWhere('u.displayName LIKE :displayName')
+                    ->setParameter('displayName', $searchForm->get('name')->getData());
+            if (!$searchForm->get('email')->isEmpty())
+                $queryBuilder->leftJoin('u.emails', 'e')
+                    ->andWhere('e.email LIKE :email')
+                    ->setParameter('email', $searchForm->get('email')->getData());
+            foreach (array_merge($searchForm->get('is')->getData(), $searchForm->get('is')->getExtraData()) as $value) {
+                switch ($value) {
+                    case 'admin':
+                        $queryBuilder->andWhere('u.role IN(\'ROLE_ADMIN\', \'ROLE_SUPER_ADMIN\')');
+                        break;
+                    case 'su':
+                    case 'superadmin':
+                    case 'super_admin':
+                        $queryBuilder->andWhere('u.role = \'ROLE_SUPER_ADMIN\'');
+                        break;
+                    case 'user':
+                        $queryBuilder->andWhere('u.role IN(\'ROLE_USER\',\'ROLE_AUDIT\')');
+                        break;
+                    case 'enabled':
+                        $queryBuilder->andWhere('u.enabled = true');
+                        break;
+                    case 'disabled':
+                        $queryBuilder->andWhere('u.enabled = false');
+                        break;
                 }
-                $group = $link->getData();
-                if (!$group instanceof Group) {
-                    throw new BadRequestHttpException('Subresource of wrong type (expected: group)');
-                }
-                if (!$user->getGroups()->contains($group)) {
-                    $user->addGroup($group);
-                }
-                break;
-            default:
-                throw new BadRequestHttpException('Invalid relationship (allowed: group)');
+            }
         }
+        return $this->view($this->paginate($queryBuilder, $request))
+            ->setTemplateData(array(
+                'batch_form' => $this->createBatchForm()->createView(),
+                'search_form' => $searchForm->createView(),
+            ));
     }
 
-    protected function handleUnlink($type, $user, $link)
+    /**
+     * @ApiDoc
+     * @View
+     */
+    public function getAction(User $user)
     {
-        switch ($type) {
-            case 'group':
-                if (!$this->hasRole('ROLE_SCOPE_W_PROFILE_GROUPS')) {
-                    throw new AccessDeniedException();
-                }
+        $view = $this->view($user);
 
-                $group = $link->getData();
-                if (!$group instanceof Group) {
-                    throw new BadRequestHttpException('Subresource of wrong type (expected: group)');
-                }
-                $user->removeGroup($group);
-                break;
-            default:
-                throw new BadRequestHttpException('Invalid relationship (allowed: group)');
-        }
+        $serializationGroups = array('admin_user_object', 'object');
+        if($this->isGranted('ROLE_SCOPE_R_PROFILE_EMAIL'))
+            $serializationGroups[] = 'admin_user_object_scope_email';
+
+        $view->getSerializationContext()->setGroups($serializationGroups);
+
+        return $view;
     }
 
-    public function getSerializationGroups($action)
+    /**
+     * @Post
+     */
+    public function batchAction(Request $request)
     {
-        $groups = parent::getSerializationGroups($action);
-        if ($action == 'get') {
-            if ($this->hasRole('ROLE_SCOPE_R_PROFILE_EMAIL')) {
-                $groups[] = 'admin_user_object_scope_email';
+        $repository = $this->getEntityRepository();
+
+        // Do not allow to edit super admins in batch mode
+        $form = $this->createBatchForm();
+        $form->handleRequest($request);
+        foreach ($form->get('subjects')->getData() as $id => $exec) {
+            if ($exec) {
+                $user = $repository->find($id);
+                if ($user->getRole() === 'ROLE_SUPER_ADMIN') {
+                    throw $this->createAccessDeniedException();
+                }
             }
         }
 
-        return $groups;
-    }
+        $this->handleBatch($request);
 
-    private function hasRole($role)
-    {
-        if (($rm = $this->getResourceManager()) instanceof SecuredResourceManager) {
-            /* @var $rm SecuredResourceManager */
-            if (($ac = $rm->getAuthorizationChecker()) instanceof DefaultAuthorizationChecker) {
-                /* @var $ac DefaultAuthorizationChecker */
-
-                return $ac->hasRole($role);
-            }
-        }
-
-        return false;
+        return $this->routeRedirectView('admin_user_gets');
     }
 
     protected function getBatchActions()
     {
         $actions = parent::getBatchActions();
-        if ($this->hasRole('ROLE_SCOPE_W_PROFILE_ENABLED')) {
+        if ($this->isGranted('ROLE_SCOPE_W_PROFILE_ENABLED')) {
             $actions['Account enabled']['PATCH_enabled_true'] = 'Enable';
             $actions['Account enabled']['PATCH_enabled_false'] = 'Disable';
             $actions['Password authentication']['PATCH_passwordEnabled_0'] = 'Disable';
@@ -219,23 +133,265 @@ class UserController extends DefaultController
         return $actions;
     }
 
-    protected function handleBatch($action, $subjects)
+    /**
+     * @View
+     */
+    public function editAction(User $user)
     {
-        switch ($action) {
-            case 'PATCH_enabled_false':
-            case 'PATCH_enabled_true':
-                foreach ($subjects as $id => $exec) {
-                    if ($exec) {
-                        $user = $this->getResourceManager()->find($id);
-                        if ($user->getRole() !== 'ROLE_SUPER_ADMIN') {
-                            $user->setEnabled($action === 'PATCH_enabled_true');
-                            $this->getResourceManager()->update($user);
-                        }
-                    }
-                }
-                break;
-            default:
-                parent::handleBatch($action, $subjects);
-        }
+        return $this->createEditForm($user);
+    }
+
+    /**
+     * @View(template="AdminBundle:User:edit.html.twig")
+     */
+    public function putAction(Request $request, User $user)
+    {
+        $form = $this->createEditForm($user);
+        $form->handleRequest($request);
+
+        if(!$form->isValid())
+            return $form;
+
+        $this->getEntityManager()->flush();
+
+        return $this->routeRedirectView('admin_user_get', array('user'=>$user->getGuid()), Codes::HTTP_NO_CONTENT);
+    }
+
+    /**
+     * @View
+     */
+    public function newAction()
+    {
+        return $this->createCreateForm();
+    }
+
+    /**
+     * @View(template="AdminBundle:User:new.html.twig")
+     */
+    public function postAction(Request $request)
+    {
+        $form = $this->createCreateForm();
+        $form->handleRequest($request);
+
+        if(!$form->isValid())
+            return $form;
+
+        $this->getEntityManager()->persist($form->getData());
+        $this->getEntityManager()->flush();
+
+        return $this->routeRedirectView('admin_user_get', array('user'=>$form->getData()->getGuid()));
+    }
+
+    /**
+     * @View
+     */
+    public function removeAction(User $user)
+    {
+        return $this->createDeleteForm();
+    }
+
+    /**
+     * @View(template="AdminBundle:User:remove.html.twig")
+     */
+    public function deleteAction(Request $request, User $user)
+    {
+        $ret = $this->handleDelete($request, $user);
+        if($ret)
+            return $ret;
+        return $this->routeRedirectView('admin_user_gets', array(), Codes::HTTP_NO_CONTENT);
+    }
+
+    public function linkAction(Request $request, User $user)
+    {
+        $this->handleLink($request, array(
+            'group' => function($group) use ($user) {
+                if(!$group instanceof Group)
+                    throw new BadRequestHttpException('Subresource of wrong type (expected: group)');
+                if(!$user->getGroups()->contains($group))
+                    $user->addGroup($group);
+            }
+        ));
+        $this->getEntityManager()->flush();
+    }
+
+    public function unlinkAction(Request $request, User $user)
+    {
+        $this->handleLink($request, array(
+            'group' => function($group) use ($user) {
+                if(!$group instanceof Group)
+                    throw new BadRequestHttpException('Subresource of wrong type (expected: group)');
+                $user->removeGroup($group);
+            }
+        ));
+        $this->getEntityManager()->flush();
+    }
+
+    /**
+     * @ApiDoc
+     * @ParamConverter("u",options={"mapping":{"u":"guid"}})
+     * @Security("(has_role('ROLE_SCOPE_W_PROFILE_ENABLED') and u.getRole() not in ['ROLE_ADMIN', 'ROLE_SUPER_ADMIN']) or has_role('ROLE_SCOPE_W_PROFILE_ENABLED_ADMIN')")
+     */
+    public function enableAction(User $u)
+    {
+        $u->setEnabled(true);
+        $this->getEntityManager()->flush();
+    }
+
+    /**
+     * @ApiDoc
+     * @ParamConverter("u",options={"mapping":{"u":"guid"}})
+     * @Security("(has_role('ROLE_SCOPE_W_PROFILE_ENABLED') and u.getRole() not in ['ROLE_ADMIN', 'ROLE_SUPER_ADMIN']) or has_role('ROLE_SCOPE_W_PROFILE_ENABLED_ADMIN')")
+     */
+    public function disableAction(User $u)
+    {
+        $u->setEnabled(false);
+        $this->getEntityManager()->flush();
+    }
+
+    /**
+     * @ApiDoc
+     * @Security("has_role('ROLE_SCOPE_W_PROFILE_ADMIN')")
+     */
+    public function roleAction(Request $request, User $user)
+    {
+        return $this->processOtherField($request, $user, 'role');
+    }
+
+    /**
+     * @ApiDoc
+     * @Security("has_role('ROLE_SCOPE_W_PROFILE_USERNAME')")
+     */
+    public function usernameAction(Request $request, User $user)
+    {
+        return $this->processOtherField($request, $user, 'username');
+    }
+
+    /**
+     * @ApiDoc
+     */
+    public function displaynameAction(Request $request, User $user)
+    {
+        return $this->processOtherField($request, $user, 'displayName');
+    }
+
+    /**
+     * @ApiDoc
+     * @Security("has_role('ROLE_SCOPE_W_PROFILE_CRED')")
+     */
+    public function passwordAction(Request $request, User $user)
+    {
+        return $this->processOtherField($request, $user, 'password');
+    }
+
+    /**
+     * @ApiDoc
+     * @Patch("/{id}/password/disable")
+     * @Security("has_role('ROLE_SCOPE_W_PROFILE_CRED')")
+     */
+    public function passwordDisableAction(User $user)
+    {
+        $user->setPasswordEnabled(0);
+        $this->getEntityManager()->flush();
+    }
+
+    /**
+     * @ApiDoc
+     * @Patch("/{id}/password/enable")
+     * @Security("has_role('ROLE_SCOPE_W_PROFILE_CRED')")
+     * @param User $user
+     */
+    public function passwordEnableAction(User $user)
+    {
+        $user->setPasswordEnabled(1);
+        $this->getEntityManager()->flush();
+    }
+
+    /**
+     * @ApiDoc
+     * @Patch("/{id}/password/settable")
+     * @Security("has_role('ROLE_SCOPE_W_PROFILE_CRED')")
+     */
+    public function passwordInitialAction(User $user)
+    {
+        $user->setPasswordEnabled(2);
+        $this->getEntityManager()->flush();
+    }
+
+    private function processOtherField(Request $request, User $user, $field)
+    {
+        $form = $this->createEditForm($user);
+        $form->submit(array($field => $request->getContent()), false);
+        if(!$form->isValid())
+            return $form->get($field);
+
+        $this->getEntityManager()->flush();
+        return null;
+    }
+
+
+    /**
+     * @return UserType
+     */
+    protected function getFormType()
+    {
+        return new UserType(new UserTypeLocalFlagsEventListener($this->get('security.authorization_checker')));
+    }
+
+    protected function createNewEntity()
+    {
+        return new User();
+    }
+
+    /**
+     * @return EntityRepository
+     */
+    protected function getEntityRepository()
+    {
+        return $this->getEntityManager()->getRepository('AppBundle:User');
+    }
+
+    /**
+     * @return FormInterface
+     */
+    private function createSearchForm()
+    {
+        $ff = $this->get('form.factory');
+        /* @var $ff FormFactoryInterface */
+        $isForm = $ff->createNamedBuilder('is', 'form', null, array(
+            'allow_extra_fields' => true,
+            'label' => false,
+            'required' => false,
+        ))
+            ->add('admin', 'choice', array(
+                'choices' => array(
+                    'admin', 'superadmin', 'user'
+                ),
+                'expanded' => true,
+                'required' => false,
+            ))
+            ->add('enabled', 'choice', array(
+                'choices' => array(
+                    'enabled', 'disabled'
+                ),
+                'expanded' => true,
+                'required' => false,
+            ));
+        return $ff->createNamedBuilder('q', 'form', null, array(
+            'csrf_protection' => false,
+            'allow_extra_fields' => true
+        ))
+            ->setMethod('GET')
+            ->add('username', 'text', array(
+                'required' => false,
+            ))
+            ->add('name', 'text', array(
+                'required' => false,
+            ))
+            ->add('email', 'text', array(
+                'required' => false,
+            ))
+            ->add($isForm)
+            ->add('search', 'submit')
+            ->getForm();
     }
 }

@@ -27,7 +27,6 @@ class AppKernel extends Kernel
             new FOS\OAuthServerBundle\FOSOAuthServerBundle(),
             new Doctrine\Bundle\MigrationsBundle\DoctrineMigrationsBundle(),
             new Stof\DoctrineExtensionsBundle\StofDoctrineExtensionsBundle(),
-            new vierbergenlars\Bundle\RadRestBundle\VlRadRestBundle(),
             new Nelmio\ApiDocBundle\NelmioApiDocBundle(),
             new KULeuven\ShibbolethBundle\ShibbolethBundle(),
             new App\AppBundle(),
