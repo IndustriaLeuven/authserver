@@ -4,7 +4,6 @@ namespace App\Security\User;
 
 use App\Entity\EmailAddress;
 use App\Entity\User;
-use App\Entity\UserRepository;
 use KULeuven\ShibbolethBundle\Security\ShibbolethUserProviderInterface;
 use KULeuven\ShibbolethBundle\Security\ShibbolethUserToken;
 use Symfony\Bridge\Doctrine\Security\User\EntityUserProvider;
@@ -12,11 +11,11 @@ use Doctrine\Common\Persistence\ManagerRegistry;
 
 class UserProvider extends EntityUserProvider implements ShibbolethUserProviderInterface
 {
-    private $repo;
     private $shibAutoEnable;
-    public function __construct(ManagerRegistry $registry, UserRepository $repo, $shibAutoEnable)
+    private $em;
+    public function __construct(ManagerRegistry $registry, $shibAutoEnable)
     {
-        $this->repo = $repo;
+        $this->em = $registry->getManagerForClass('AppBundle:User');
         $this->shibAutoEnable = $shibAutoEnable;
         parent::__construct($registry, 'AppBundle:User', 'username');
     }
@@ -33,7 +32,7 @@ class UserProvider extends EntityUserProvider implements ShibbolethUserProviderI
 
     function createUser(ShibbolethUserToken $token)
     {
-        $user = $this->repo->newInstance();
+        $user = new User();
 
         $user->setDisplayName($token->getFullName());
         $username = $token->getUsername();
@@ -51,13 +50,16 @@ class UserProvider extends EntityUserProvider implements ShibbolethUserProviderI
         $user->setPasswordEnabled(0);
 
         if($token->hasAttribute('mail')) {
-            $user->getPrimaryEmailAddress()
-                ->setEmail($token->getMail())
-                ->setVerified(true);
-        } else {
-            $user->removeEmailAddress($user->getPrimaryEmailAddress());
+            $emailAddress = new EmailAddress();
+            $emailAddress->setEmail($token->getMail());
+            $emailAddress->setVerified(true);
+            $emailAddress->setPrimary(true);
+            $emailAddress->setUser($user);
+            $user->addEmailAddress($emailAddress);
+            $this->em->persist($emailAddress);
         }
-        $this->repo->create($user);
+        $this->em->persist($user);
+        $this->em->flush();
 
         return $user;
     }

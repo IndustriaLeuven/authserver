@@ -3,7 +3,6 @@
     <services>
         <service id="app.user_provider" class="App\Security\User\UserProvider">
             <argument type="service" id="doctrine" />
-            <argument type="service" id="app.admin.user.repo" />
             <argument>%shibboleth_auto_enable_user%</argument>
         </service>
         <service id="app.security.logout_handler" class="App\Handler\LogoutHandler">
