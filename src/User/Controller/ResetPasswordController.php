@@ -1,4 +1,21 @@
 <?php
+/* Authserver, an OAuth2-based single-signon authentication provider written in PHP.
+ *
+ * Copyright (C) 2015  Lars Vierbergen
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
 namespace User\Controller;
 
@@ -23,10 +40,8 @@ class ResetPasswordController extends Controller
         $form  = $this->createForm(new AccountSubmitType(), array('user'=>$request->query->get('user', '')));
         $flash = $this->get('braincrafted_bootstrap.flash');
         $mailer = $this->get('app.mailer.user.reset_password');
-        $repo = $this->getDoctrine()->getRepository('AppBundle:User');
         /* @var $flash FlashMessage */
         /* @var $mailer PrimedTwigMailer */
-        /* @var $repo UserRepository */
 
         if(!$this->isGranted('IS_AUTHENTICATED_ANONYMOUSLY')&&!$this->isGranted('ROLE_ADMIN')) {
             $flash->alert('You are already logged in. If you forgot your password, please log out before trying to reset it.');
@@ -41,7 +56,7 @@ class ResetPasswordController extends Controller
                 $flash->error('Your account does not have password authentication enabled.');
             } else {
                 $user->generatePasswordResetToken();
-                $repo->update($user);
+                $this->getDoctrine()->getManagerForClass('AppBundle:User')->flush();
                 if(!$mailer->sendMessage($user, $user)) {
                     $flash->error('Could not send you a message. Is your email address already verified?');
                 } else {
@@ -62,16 +77,15 @@ class ResetPasswordController extends Controller
 
         $form = $this->createForm(new AddPasswordType());
         $flash = $this->get('braincrafted_bootstrap.flash');
-        $repo = $this->getDoctrine()->getRepository('AppBundle:User');
         /* @var $flash FlashMessage */
-        /* @var $repo UserRepository */
 
         if(!$this->isGranted('IS_AUTHENTICATED_ANONYMOUSLY')) {
             $flash->alert('You are already logged in. Log out before resetting your password.');
             return $this->redirectToRoute('user_profile');
         }
 
-        $user = $repo->findOneBy(array('username'=>$username));
+        $user = $this->getDoctrine()->getRepository('AppBundle:User')
+            ->findOneBy(array('username'=>$username));
         /* @var $user User */
         if($user === null||$user->getPasswordResetToken() !== $verificationCode) {
             $flash->error('This password reset code is no longer valid, or this user does no longer exist.');
@@ -87,7 +101,7 @@ class ResetPasswordController extends Controller
                 );
                 $user->setPasswordEnabled(1);
                 $user->clearPasswordResetToken();
-                $this->getDoctrine()->getRepository('AppBundle:User')->update($user);
+                $this->getDoctrine()->getManagerForClass('AppBundle:User')->flush();
                 $flash->success('Your password has been changed. You can now log in with your new password.');
             } else {
                 return $form;

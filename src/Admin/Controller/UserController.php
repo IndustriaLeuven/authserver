@@ -1,4 +1,21 @@
 <?php
+/* Authserver, an OAuth2-based single-signon authentication provider written in PHP.
+ *
+ * Copyright (C) 2015  Lars Vierbergen
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
 namespace Admin\Controller;
 
@@ -9,7 +26,6 @@ use App\Form\UserType;
 use Doctrine\ORM\EntityRepository;
 use FOS\RestBundle\Util\Codes;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
-use Nelmio\ApiDocBundle\Annotation\ApiDoc;
 use FOS\RestBundle\Controller\Annotations\View;
 use FOS\RestBundle\Controller\Annotations\Get;
 use FOS\RestBundle\Controller\Annotations\Post;
@@ -58,6 +74,9 @@ class UserController extends CRUDController
                     case 'super_admin':
                         $queryBuilder->andWhere('u.role = \'ROLE_SUPER_ADMIN\'');
                         break;
+                    case 'audit':
+                        $queryBuilder->andWhere('u.role = \'ROLE_AUDIT\'');
+                        break;
                     case 'user':
                         $queryBuilder->andWhere('u.role IN(\'ROLE_USER\',\'ROLE_AUDIT\')');
                         break;
@@ -80,7 +99,6 @@ class UserController extends CRUDController
     }
 
     /**
-     * @ApiDoc
      * @View
      */
     public function getAction(User $user)
@@ -228,7 +246,6 @@ class UserController extends CRUDController
     }
 
     /**
-     * @ApiDoc
      * @ParamConverter("u",options={"mapping":{"u":"guid"}})
      * @Security("(has_role('ROLE_SCOPE_W_PROFILE_ENABLED') and u.getRole() not in ['ROLE_ADMIN', 'ROLE_SUPER_ADMIN']) or has_role('ROLE_SCOPE_W_PROFILE_ENABLED_ADMIN')")
      */
@@ -239,7 +256,6 @@ class UserController extends CRUDController
     }
 
     /**
-     * @ApiDoc
      * @ParamConverter("u",options={"mapping":{"u":"guid"}})
      * @Security("(has_role('ROLE_SCOPE_W_PROFILE_ENABLED') and u.getRole() not in ['ROLE_ADMIN', 'ROLE_SUPER_ADMIN']) or has_role('ROLE_SCOPE_W_PROFILE_ENABLED_ADMIN')")
      */
@@ -250,7 +266,6 @@ class UserController extends CRUDController
     }
 
     /**
-     * @ApiDoc
      * @Security("has_role('ROLE_SCOPE_W_PROFILE_ADMIN')")
      */
     public function roleAction(Request $request, User $user)
@@ -259,7 +274,6 @@ class UserController extends CRUDController
     }
 
     /**
-     * @ApiDoc
      * @Security("has_role('ROLE_SCOPE_W_PROFILE_USERNAME')")
      */
     public function usernameAction(Request $request, User $user)
@@ -267,16 +281,12 @@ class UserController extends CRUDController
         return $this->processOtherField($request, $user, 'username');
     }
 
-    /**
-     * @ApiDoc
-     */
     public function displaynameAction(Request $request, User $user)
     {
         return $this->processOtherField($request, $user, 'displayName');
     }
 
     /**
-     * @ApiDoc
      * @Security("has_role('ROLE_SCOPE_W_PROFILE_CRED')")
      */
     public function passwordAction(Request $request, User $user)
@@ -285,7 +295,6 @@ class UserController extends CRUDController
     }
 
     /**
-     * @ApiDoc
      * @Patch("/{id}/password/disable")
      * @Security("has_role('ROLE_SCOPE_W_PROFILE_CRED')")
      */
@@ -296,7 +305,6 @@ class UserController extends CRUDController
     }
 
     /**
-     * @ApiDoc
      * @Patch("/{id}/password/enable")
      * @Security("has_role('ROLE_SCOPE_W_PROFILE_CRED')")
      * @param User $user
@@ -308,7 +316,6 @@ class UserController extends CRUDController
     }
 
     /**
-     * @ApiDoc
      * @Patch("/{id}/password/settable")
      * @Security("has_role('ROLE_SCOPE_W_PROFILE_CRED')")
      */
@@ -365,14 +372,18 @@ class UserController extends CRUDController
         ))
             ->add('admin', 'choice', array(
                 'choices' => array(
-                    'admin', 'superadmin', 'user'
+                    'admin' => 'Admins',
+                    'superadmin' => 'Super admins',
+                    'audit' => 'Audit',
+                    'user' => 'Users',
                 ),
                 'expanded' => true,
                 'required' => false,
             ))
             ->add('enabled', 'choice', array(
                 'choices' => array(
-                    'enabled', 'disabled'
+                    'enabled' => 'Yes',
+                    'disabled' => 'No',
                 ),
                 'expanded' => true,
                 'required' => false,

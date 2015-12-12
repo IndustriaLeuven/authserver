@@ -3,8 +3,9 @@
     <head>
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>{% block title %}Industria login{% endblock %}</title>
-        <link rel="stylesheet" href="{{ asset('css/bootstrap.css') }}">
-        <link rel="stylesheet" href="{{ asset('bundles/app/css/main.css') }}">
+        {% stylesheets '@bootstrap_css' '@AppBundle/Resources/public/css/main.css' %}
+            <link rel="stylesheet" href="{{ asset_url }}">
+        {% endstylesheets %}
         {% block head %}
         {% endblock %}
     </head>
@@ -45,6 +46,7 @@
                                         <ul class="dropdown-menu">
                                             {{ self.render_admin_link('admin_oauth_client_', 'cube', 'OAuth Apps') }}
                                             {{ self.render_admin_link('admin_apikey_', 'key', 'API keys') }}
+                                            {{ self.render_admin_link('admin_property_namespace_', 'object-group', 'Property namespaces') }}
                                         </ul>
                                     </li>
                                 {% endif %}
@@ -96,7 +98,7 @@
                                     {{ icon('bolt fa-fw') }}
                                 {% endif %}
                             </span>
-                            {% if app.security.token %}
+                            {% if app.user %}
                                 {% if is_granted('ROLE_PREVIOUS_ADMIN') %}
                                     <a href="{{ url('home', {'_switch_user':'_exit'}) }}" class="text-muted">{{ icon('stethoscope fa-fw')}}</a>
                                 {% endif %}
@@ -115,8 +117,9 @@
             </div>
         </footer>
         {% block javascript %}
-            <script src="{{ asset('js/jquery.js') }}"></script>
-            <script src="{{ asset('js/bootstrap.js') }}"></script>
+            {% javascripts '@jquery' '@bootstrap_js' %}
+                <script src="{{ asset_url }}"></script>
+            {% endjavascripts %}
         {% endblock %}
     </body>
 </html>

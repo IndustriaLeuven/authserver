@@ -1,4 +1,21 @@
 <?php
+/* Authserver, an OAuth2-based single-signon authentication provider written in PHP.
+ *
+ * Copyright (C) 2015  Lars Vierbergen
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
 use Doctrine\ORM\PersistentCollection;
 use Doctrine\ORM\UnitOfWork;
@@ -6,6 +23,7 @@ use Doctrine\ORM\UnitOfWork;
 namespace App\Doctrine;
 
 use App\Entity\Group;
+use App\Entity\Property\PropertyNamespace;
 use App\Entity\User;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\PersistentCollection;
@@ -16,7 +34,7 @@ use Gedmo\Loggable\LoggableListener;
 use Gedmo\Loggable\Mapping\Event\LoggableAdapter;
 use Gedmo\Tool\Wrapper\AbstractWrapper;
 
-class ExtendedLogListener extends  LoggableListener
+class ExtendedLogListener extends LoggableListener
 {
     private static function attachManyToManyLogEntry(AbstractLogEntry $logEntry, $fieldName, Collection $collection)
     {
@@ -48,6 +66,9 @@ class ExtendedLogListener extends  LoggableListener
             self::attachManyToManyLogEntry($logEntry, 'groups', $object->getGroups());
         } elseif ($object instanceof Group) {
             self::attachManyToManyLogEntry($logEntry, 'groups', $object->getGroups());
+        } elseif($object instanceof PropertyNamespace) {
+            self::attachManyToManyLogEntry($logEntry, 'readers', $object->getReaders());
+            self::attachManyToManyLogEntry($logEntry, 'writers', $object->getWriters());
         }
     }
 

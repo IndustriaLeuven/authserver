@@ -1,11 +1,28 @@
 <?php
+/* Authserver, an OAuth2-based single-signon authentication provider written in PHP.
+ *
+ * Copyright (C) 2015  Lars Vierbergen
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
 namespace App\Controller;
 
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\Security\Core\SecurityContext;
+use Symfony\Component\Security\Core\Security;
 
 class SecurityController extends Controller
 {
@@ -14,11 +31,11 @@ class SecurityController extends Controller
         $session = $request->getSession();
 
         // get the login error if there is one
-        if ($request->attributes->has(SecurityContext::AUTHENTICATION_ERROR)) {
-            $error = $request->attributes->get(SecurityContext::AUTHENTICATION_ERROR);
+        if ($request->attributes->has(Security::AUTHENTICATION_ERROR)) {
+            $error = $request->attributes->get(Security::AUTHENTICATION_ERROR);
         } else {
-            $error = $session->get(SecurityContext::AUTHENTICATION_ERROR);
-            $session->remove(SecurityContext::AUTHENTICATION_ERROR);
+            $error = $session->get(Security::AUTHENTICATION_ERROR);
+            $session->remove(Security::AUTHENTICATION_ERROR);
         }
         // Add the following lines
         if ($session->has('_security.target_path')) {
@@ -29,7 +46,7 @@ class SecurityController extends Controller
 
         return $this->render('AppBundle:Security:login.html.twig', array(
             // last username entered by the user
-            'last_username' => $session->get(SecurityContext::LAST_USERNAME),
+            'last_username' => $session->get(Security::LAST_USERNAME),
             'error'         => $error,
             'error_type'    => $error?get_class($error):null,
         ));

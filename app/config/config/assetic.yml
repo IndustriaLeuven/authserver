@@ -2,8 +2,10 @@
 assetic:
     debug:          %kernel.debug%
     use_controller: false
-    node: /home/org/industria/bin/node
-    bundles:        [ ]
+    bundles:        [ AdminBundle ]
+    assets:
+        vizjs:
+            inputs: "../node_modules/viz.js/viz.js"
     filters:
         cssrewrite: ~
         less:

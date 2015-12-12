@@ -1,4 +1,21 @@
 <?php
+/* Authserver, an OAuth2-based single-signon authentication provider written in PHP.
+ *
+ * Copyright (C) 2015  Lars Vierbergen
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
 namespace Admin\Controller;
 
@@ -10,7 +27,6 @@ use FOS\RestBundle\Controller\Annotations\Get;
 use FOS\RestBundle\Controller\Annotations\Post;
 use FOS\RestBundle\Controller\Annotations\View;
 use FOS\RestBundle\Util\Codes;
-use Nelmio\ApiDocBundle\Annotation\ApiDoc;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Form;
 use Symfony\Component\Form\FormFactoryInterface;
@@ -24,9 +40,6 @@ use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
  */
 class GroupController extends CRUDController
 {
-    /**
-     * @ApiDoc
-     */
     public function flagsAction(Request $request, Group $group)
     {
         $form = $this->get('form.factory')
@@ -60,9 +73,6 @@ class GroupController extends CRUDController
         return null;
     }
 
-    /**
-     * @ApiDoc
-     */
     public function displaynameAction(Request $request, Group $group)
     {
         $form = $this->createEditForm($group);
@@ -76,7 +86,6 @@ class GroupController extends CRUDController
     /**
      * @View
      * @Get(path="/{group}/members")
-     * @ApiDoc
      */
     public function getMembersAction(Request $request, Group $group)
     {
@@ -132,21 +141,51 @@ class GroupController extends CRUDController
                     ->setParameter('userLeaveable', !!$searchForm->get('userleave')->getData());
         }
 
+        if($request->attributes->get('_format') === 'gv') {
+            $request->setRequestFormat('gv');
+            return $this->view($queryBuilder->getQuery()->getResult())
+                ->setTemplateData(array(
+                    'link_map' => new \ArrayObject(),
+                    'groups' => new \ArrayObject(),
+                    'depth' => (int)$request->query->get('depth', -1),
+                    'request' => $request,
+                ));
+        }
+
         $view = $this->view($this->paginate($queryBuilder, $request))
             ->setTemplateData(array(
                 'batch_form'=>$this->createBatchForm()->createView(),
                 'search_form' => $searchForm->createView(),
+                'graph_form' => $this->createGraphForm($request, -1, false)->createView(),
             ));
         $view->getSerializationContext()->setGroups(['admin_group_list', 'list']);
         return $view;
     }
 
     /**
-     * @View(serializerGroups={"admin_group_object", "object"}, serializerEnableMaxDepthChecks=true)
+     * @View(serializerEnableMaxDepthChecks=true)
      */
-    public function getAction(Group $group)
+    public function getAction(Group $group, Request $request)
     {
-        return $group;
+        if($request->attributes->get('_format') === 'gv') {
+            $request->setRequestFormat('gv');
+            return $this->view($group)
+                ->setTemplateData(array(
+                    'depth' => (int)$request->query->get('depth', 5),
+                    'direction' => $request->query->get('direction', 'both'),
+                    'link_map' => new \ArrayObject(),
+                    'groups' => new \ArrayObject(),
+                ));
+        }
+
+        $view = $this->view($group);
+        $view->getSerializationContext()->setGroups(array('admin_group_object', 'object'));
+        $view->setTemplateData(\Closure::bind(function() use($request) {
+            return array(
+                'graph_form' => $this->createGraphForm($request, 5, true)->createView(),
+            );
+        }, $this));
+        return $view;
     }
 
     /**
@@ -338,5 +377,31 @@ class GroupController extends CRUDController
             ))
             ->add('search', 'submit')
             ->getForm();
+    }
+
+    /**
+     * @return FormInterface
+     */
+    private function createGraphForm(Request $request, $defaultDepth, $includeDirection)
+    {
+        $ff = $this->get('form.factory');
+        /* @var $ff FormFactoryInterface */
+        $builder =  $ff->createNamedBuilder('graph', 'form', array('depth' => $defaultDepth));
+        if($includeDirection)
+            $builder->add('direction', 'choice', array(
+                'choices' => array(
+                    'up' => 'Members',
+                    'down' => 'Parents',
+                    'both' => 'Both'
+                )
+            ));
+        $builder->add('depth', 'integer')
+            ->add('Create graph', 'button', array(
+                'attr' => array(
+                    'class' => 'js--vizjs-load-graph'
+                )
+            ))
+            ->setAction($this->generateUrl($request->attributes->get('_route'), array_merge($request->attributes->get('_route_params'), $request->query->all(), array('_format'=>'gv'))));
+        return $builder->getForm();
     }
 }

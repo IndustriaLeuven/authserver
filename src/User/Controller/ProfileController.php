@@ -1,4 +1,21 @@
 <?php
+/* Authserver, an OAuth2-based single-signon authentication provider written in PHP.
+ *
+ * Copyright (C) 2015  Lars Vierbergen
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
 namespace User\Controller;
 
@@ -80,7 +97,7 @@ class ProfileController extends Controller
                         ->execute();
                 $em = $this->getDoctrine()->getManagerForClass('AppBundle:OAuth\UserAuthorization');
                 $em->remove($userAuthorization);
-                $em->flush($userAuthorization);
+                $em->flush();
 
                 $this->getDoctrine()->getManager()->commit();
                 $this->getFlash()->success('Authorized application has been removed');
@@ -181,7 +198,7 @@ class ProfileController extends Controller
             if(!$this->getUser()->getPrimaryEmailAddress())
                 $addr->setPrimary(true);
             $em->persist($addr);
-            $em->flush($addr);
+            $em->flush();
 
             if ($mailer->sendMessage($addr->getEmail(), $addr)) {
                 $this->getFlash()->success('A verification email has been sent to your email address. Please click the link to verify your email address.');
@@ -229,7 +246,7 @@ class ProfileController extends Controller
                     ->encodePassword($form->get('password')->getData(), null)
             );
             $user->setPasswordEnabled(1);
-            $this->getDoctrine()->getRepository('AppBundle:User')->update($user);
+            $this->getDoctrine()->getManagerForClass('AppBundle:User')->flush();
             $this->getFlash()->success('Password has been changed successfully');
 
             return $this->redirectToProfile();
@@ -256,7 +273,7 @@ class ProfileController extends Controller
                 return $this->redirectToProfile();
             }
             $user->addGroup($group);
-            $this->getDoctrine()->getRepository('AppBundle:User')->update($user);
+            $this->getDoctrine()->getManagerForClass('AppBundle:User')->flush();
             $this->getFlash()->success('You joined the group '.$group->getDisplayName().'.');
         } else {
             $errString = 'Problems while adding group.';
@@ -296,7 +313,7 @@ class ProfileController extends Controller
             $user = $this->getUser();
             /* @var $user User */
             $user->removeGroup($group);
-            $this->getDoctrine()->getRepository('AppBundle:User')->update($user);
+            $this->getDoctrine()->getManagerForClass('AppBundle:User')->flush();
             $this->getFlash()->success('You left the group '.$group->getDisplayName().'.');
         } else {
             $this->getFlash()->error('Cannot leave this group.');

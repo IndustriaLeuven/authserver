@@ -1,4 +1,21 @@
 <?php
+/* Authserver, an OAuth2-based single-signon authentication provider written in PHP.
+ *
+ * Copyright (C) 2015  Lars Vierbergen
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
 namespace Admin\Controller;
 
@@ -9,7 +26,6 @@ use App\Mail\PrimedTwigMailer;
 use FOS\RestBundle\Controller\Annotations\Post;
 use FOS\RestBundle\Routing\ClassResourceInterface;
 use FOS\RestBundle\Util\Codes;
-use Nelmio\ApiDocBundle\Annotation\ApiDoc;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
@@ -26,7 +42,6 @@ use FOS\RestBundle\Controller\Annotations\View;
 class UserEmailController extends BaseController implements ClassResourceInterface
 {
     /**
-     * @ApiDoc
      * @View(serializerGroups={"list", "admin_user_email_list"})
      */
     public function cgetAction(Request $request, User $user)
@@ -38,7 +53,6 @@ class UserEmailController extends BaseController implements ClassResourceInterfa
     }
 
     /**
-     * @ApiDoc
      * @View(serializerGroups={"object", "admin_user_email_object"})
      */
     public function getAction(User $user, EmailAddress $email)
@@ -46,9 +60,6 @@ class UserEmailController extends BaseController implements ClassResourceInterfa
         return $email;
     }
 
-    /**
-     * @ApiDoc
-     */
     public function postAction(Request $request, User $user)
     {
         $email = new EmailAddress();
@@ -61,9 +72,6 @@ class UserEmailController extends BaseController implements ClassResourceInterfa
         return $this->routeRedirectView('admin_user_email_get_user_email', array('user' => $user->getGuid(), 'email' => $email->getId()), Codes::HTTP_CREATED);
     }
 
-    /**
-     * @ApiDoc
-     */
     public function deleteAction(User $user, EmailAddress $email)
     {
         if($email->isPrimary())
@@ -74,7 +82,6 @@ class UserEmailController extends BaseController implements ClassResourceInterfa
     }
 
     /**
-     * @ApiDoc
      * @Post("users/{user}/emails/{email}/verify")
      */
     public function postVerifyAction(User $user, EmailAddress $email)
@@ -91,18 +98,12 @@ class UserEmailController extends BaseController implements ClassResourceInterfa
         return $this->view(null, Codes::HTTP_ACCEPTED);
     }
 
-    /**
-     * @ApiDoc
-     */
     public function verifyAction(User $user, EmailAddress $email)
     {
         $email->setVerified(true);
         $this->getEntityManager()->flush();
     }
 
-    /**
-     * @ApiDoc
-     */
     public function primaryAction(User $user, EmailAddress $email)
     {
         if(!$email->isVerified())
