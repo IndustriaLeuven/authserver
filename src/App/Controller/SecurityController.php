@@ -19,6 +19,7 @@
 
 namespace App\Controller;
 
+use KULeuven\ShibbolethBundle\Service\Shibboleth;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -44,11 +45,17 @@ class SecurityController extends Controller
             }
         }
 
+        $shib = $this->get('shibboleth');
+        /* @var $shib Shibboleth */
+
+        $shibLogoutUrl = $shib->isAuthenticated($request)?$shib->getLogoutUrl($request, $request->getUri()):null;
+
         return $this->render('AppBundle:Security:login.html.twig', array(
             // last username entered by the user
             'last_username' => $session->get(Security::LAST_USERNAME),
             'error'         => $error,
             'error_type'    => $error?get_class($error):null,
+            'shibLogoutUrl' => $shibLogoutUrl,
         ));
     }
 }

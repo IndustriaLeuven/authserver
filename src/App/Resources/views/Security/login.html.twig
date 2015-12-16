@@ -21,6 +21,9 @@
                                 {% else %}
                                     <p>{{ error.message }}</p>
                                 {% endif %}
+                                {% if shibLogoutUrl %}
+                                    <p><a href="{{ shibLogoutUrl }}" class="alert-link">Log out of KU Leuven Login</a></p>
+                                {% endif %}
                             </div>
                         </div>
                     {% endif %}
