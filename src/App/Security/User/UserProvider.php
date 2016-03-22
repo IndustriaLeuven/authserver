@@ -32,9 +32,9 @@ class UserProvider extends EntityUserProvider implements ShibbolethUserProviderI
     private $em;
     public function __construct(ManagerRegistry $registry, $shibAutoEnable)
     {
+        parent::__construct($registry, 'AppBundle:User');
         $this->em = $registry->getManagerForClass('AppBundle:User');
         $this->shibAutoEnable = $shibAutoEnable;
-        parent::__construct($registry, 'AppBundle:User', 'username');
     }
 
     public function loadUserByUsername($username)
