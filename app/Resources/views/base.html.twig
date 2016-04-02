@@ -8,12 +8,8 @@
         {% endstylesheets %}
         {% if date()|date('d-m') == '01-04' %}
             <style>
-                @font-face {
-                    font-family: "Helvetica Neue";
-                    src: url('{{ asset('bundles/app/fonts/halfvetica.eot') }}');
-                    src: url('{{ asset('bundles/app/fonts/halfvetica.woff') }}') format('woff'), url('{{ asset('bundles/app/fonts/halfvetica.ttf') }}') format('truetype'), url('{{ asset('bundles/app/fonts/halfvetica.svg') }}') format('svg');
-                    font-weight: normal;
-                    font-style: normal;
+                html {
+                    transform: rotateX(1deg);
                 }
             </style>
         {% endif %}
