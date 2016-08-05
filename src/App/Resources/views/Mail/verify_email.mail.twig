@@ -8,6 +8,8 @@
     <p>Sincerely,</p>
     <p>Industria PC<br>
         pc@industria.be</p>
+    <hr>
+    <p>Generated especially for you by <a href="https://github.com/vierbergenlars/authserver">Authserver</a> at <a href="{{ url('home') }}">{{ url('home') }}</a></p>
 {% endblock %}
 {% block body_text %}
 Hello {{ data.user.displayName }},
@@ -19,4 +21,6 @@ Sincerely,
 
 Industria PC
 pc@industria.be
+--------------------------------------------------------------------------------
+Generated especially for you by Authserver at {{ url('home') }}
 {% endblock %}
