@@ -49,7 +49,9 @@ DirectoryIndex app.php
 
 SetEnvIf Authorization .+ R_HTTP_AUTHORIZATION=$0
 
-ShibDisable Off
-AuthType Shibboleth
-require shibboleth
-ShibRequireSession off
+<IfModule mod_shib.cpp>
+    ShibDisable Off
+    AuthType Shibboleth
+    require shibboleth
+    ShibRequireSession off
+</IfModule>
