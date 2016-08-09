@@ -24,16 +24,21 @@ use App\Entity\Group;
 use App\Entity\User;
 use App\Form\UserType;
 use Doctrine\ORM\EntityRepository;
-use FOS\RestBundle\Util\Codes;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 use FOS\RestBundle\Controller\Annotations\View;
 use FOS\RestBundle\Controller\Annotations\Get;
 use FOS\RestBundle\Controller\Annotations\Post;
 use FOS\RestBundle\Controller\Annotations\Patch;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
+use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
+use Symfony\Component\Form\Extension\Core\Type\FormType;
+use Symfony\Component\Form\Extension\Core\Type\SubmitType;
+use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormFactoryInterface;
 use Symfony\Component\Form\FormInterface;
+use Symfony\Component\Form\Test\FormBuilderInterface;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 
 /**
@@ -94,7 +99,7 @@ class UserController extends CRUDController
                 'batch_form' => $this->createBatchForm()->createView(),
                 'search_form' => $searchForm->createView(),
             ));
-        $view->getSerializationContext()->setGroups(['admin_user_list', 'list']);
+        $view->getContext()->setGroups(['admin_user_list', 'list']);
         return $view;
     }
 
@@ -109,7 +114,7 @@ class UserController extends CRUDController
         if($this->isGranted('ROLE_SCOPE_R_PROFILE_EMAIL'))
             $serializationGroups[] = 'admin_user_object_scope_email';
 
-        $view->getSerializationContext()->setGroups($serializationGroups);
+        $view->getContext()->setGroups($serializationGroups);
 
         return $view;
     }
@@ -135,18 +140,18 @@ class UserController extends CRUDController
 
         $this->handleBatch($request);
 
-        return $this->routeRedirectView('admin_user_gets');
+        return $this->routeRedirectView('admin_user_gets', [], Response::HTTP_NO_CONTENT);
     }
 
     protected function getBatchActions()
     {
         $actions = parent::getBatchActions();
         if ($this->isGranted('ROLE_SCOPE_W_PROFILE_ENABLED')) {
-            $actions['Account enabled']['PATCH_enabled_true'] = 'Enable';
-            $actions['Account enabled']['PATCH_enabled_false'] = 'Disable';
-            $actions['Password authentication']['PATCH_passwordEnabled_0'] = 'Disable';
-            $actions['Password authentication']['PATCH_passwordEnabled_1'] = 'Enable';
-            $actions['Password authentication']['PATCH_passwordEnabled_2'] = 'Let user set initial password';
+            $actions['Account enabled']['Enable'] = 'PATCH_enabled_true';
+            $actions['Account enabled']['Disable'] = 'PATCH_enabled_false';
+            $actions['Password authentication']['Disable'] = 'PATCH_passwordEnabled_0';
+            $actions['Password authentication']['Enable'] = 'PATCH_passwordEnabled_1';
+            $actions['Password authentication']['Let user set initial password'] = 'PATCH_passwordEnabled_2';
         }
 
         return $actions;
@@ -173,7 +178,7 @@ class UserController extends CRUDController
 
         $this->getEntityManager()->flush();
 
-        return $this->routeRedirectView('admin_user_get', array('user'=>$user->getGuid()), Codes::HTTP_NO_CONTENT);
+        return $this->routeRedirectView('admin_user_get', array('user'=>$user->getGuid()), Response::HTTP_NO_CONTENT);
     }
 
     /**
@@ -198,7 +203,7 @@ class UserController extends CRUDController
         $this->getEntityManager()->persist($form->getData());
         $this->getEntityManager()->flush();
 
-        return $this->routeRedirectView('admin_user_get', array('user'=>$form->getData()->getGuid()));
+        return $this->routeRedirectView('admin_user_get', array('user'=>$form->getData()->getGuid()), Response::HTTP_CREATED);
     }
 
     /**
@@ -217,7 +222,7 @@ class UserController extends CRUDController
         $ret = $this->handleDelete($request, $user);
         if($ret)
             return $ret;
-        return $this->routeRedirectView('admin_user_gets', array(), Codes::HTTP_NO_CONTENT);
+        return $this->routeRedirectView('admin_user_gets', array(), Response::HTTP_NO_CONTENT);
     }
 
     public function linkAction(Request $request, User $user)
@@ -342,7 +347,7 @@ class UserController extends CRUDController
      */
     protected function getFormType()
     {
-        return new UserType(new UserTypeLocalFlagsEventListener($this->get('security.authorization_checker')));
+        return UserType::class;
     }
 
     protected function createNewEntity()
@@ -365,45 +370,48 @@ class UserController extends CRUDController
     {
         $ff = $this->get('form.factory');
         /* @var $ff FormFactoryInterface */
-        $isForm = $ff->createNamedBuilder('is', 'form', null, array(
+        $isForm = $ff->createNamedBuilder('is', FormType::class, null, array(
             'allow_extra_fields' => true,
             'label' => false,
             'required' => false,
         ))
-            ->add('admin', 'choice', array(
+            ->add('admin', ChoiceType::class, array(
                 'choices' => array(
-                    'admin' => 'Admins',
-                    'superadmin' => 'Super admins',
-                    'audit' => 'Audit',
-                    'user' => 'Users',
+                    'Admins' => 'admin',
+                    'Super admins' => 'superadmin',
+                    'Audit' => 'audit',
+                    'Users' => 'user'
                 ),
+                'choices_as_values' => true,
                 'expanded' => true,
                 'required' => false,
             ))
-            ->add('enabled', 'choice', array(
+            ->add('enabled', ChoiceType::class, array(
                 'choices' => array(
-                    'enabled' => 'Yes',
-                    'disabled' => 'No',
+                    'Yes' => 'enabled',
+                    'No' => 'disabled',
                 ),
+                'choices_as_values' => true,
                 'expanded' => true,
                 'required' => false,
             ));
-        return $ff->createNamedBuilder('q', 'form', null, array(
+        return $ff->createNamedBuilder('q', FormType::class, null, array(
             'csrf_protection' => false,
             'allow_extra_fields' => true
         ))
             ->setMethod('GET')
-            ->add('username', 'text', array(
+            ->add('username', TextType::class, array(
                 'required' => false,
             ))
-            ->add('name', 'text', array(
+            ->add('name', TextType::class, array(
                 'required' => false,
             ))
-            ->add('email', 'text', array(
+            ->add('email', TextType::class, array(
                 'required' => false,
             ))
             ->add($isForm)
-            ->add('search', 'submit')
+            ->add('search', SubmitType::class)
             ->getForm();
     }
+
 }

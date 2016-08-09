@@ -21,7 +21,6 @@ namespace Admin\Controller;
 
 use Admin\Entity\ApiKey;
 use Admin\Form\ApiKeyType;
-use FOS\RestBundle\Util\Codes;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 use FOS\RestBundle\Controller\Annotations\View;
 use FOS\RestBundle\Controller\Annotations\Get;
@@ -29,7 +28,9 @@ use FOS\RestBundle\Controller\Annotations\Post;
 use FOS\RestBundle\Controller\Annotations\Patch;
 use FOS\RestBundle\Controller\Annotations\NoRoute;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
+use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 
 class ApiKeyController extends CRUDController
 {
@@ -60,7 +61,7 @@ class ApiKeyController extends CRUDController
     {
         $this->handleBatch($request);
 
-        return $this->routeRedirectView('admin_apikey_gets');
+        return $this->routeRedirectView('admin_apikey_gets', [], Response::HTTP_NO_CONTENT);
     }
 
     /**
@@ -84,7 +85,7 @@ class ApiKeyController extends CRUDController
 
         $this->getEntityManager()->flush();
 
-        return $this->routeRedirectView('admin_apikey_get', array('apikey'=>$apikey->getId()), Codes::HTTP_NO_CONTENT);
+        return $this->routeRedirectView('admin_apikey_get', array('apikey'=>$apikey->getId()), Response::HTTP_NO_CONTENT);
     }
 
     /**
@@ -109,7 +110,7 @@ class ApiKeyController extends CRUDController
         $this->getEntityManager()->persist($form->getData());
         $this->getEntityManager()->flush();
 
-        return $this->routeRedirectView('admin_apikey_get', array('apikey'=>$form->getData()->getId()));
+        return $this->routeRedirectView('admin_apikey_get', array('apikey'=>$form->getData()->getId()), Response::HTTP_CREATED);
     }
 
     /**
@@ -128,7 +129,7 @@ class ApiKeyController extends CRUDController
         $ret = $this->handleDelete($request, $apikey);
         if ($ret)
             return $ret;
-        return $this->routeRedirectView('admin_apikey_gets', array(), Codes::HTTP_NO_CONTENT);
+        return $this->routeRedirectView('admin_apikey_gets', array(), Response::HTTP_NO_CONTENT);
     }
 
     /**
@@ -157,12 +158,12 @@ class ApiKeyController extends CRUDController
             $this->getEntityManager()->flush();
         }
 
-        return $this->routeRedirectView('admin_apikey_get', array('apikey' => $apikey->getId()), Codes::HTTP_NO_CONTENT);
+        return $this->routeRedirectView('admin_apikey_get', array('apikey' => $apikey->getId()), Response::HTTP_NO_CONTENT);
     }
 
     protected function getFormType()
     {
-        return new ApiKeyType();
+        return ApiKeyType::class;
     }
 
     protected function createNewEntity()
@@ -180,7 +181,7 @@ class ApiKeyController extends CRUDController
         return $this->createFormBuilder()
             ->setMethod('POST')
             ->setAction($this->generateUrl('admin_apikey_rotate', array('apikey'=>$apiKey->getId())))
-            ->add('rotate', 'submit', array(
+            ->add('rotate', SubmitType::class, array(
                 'label' => 'Regenerate key',
                 'button_class' => 'danger btn-xs',
             ))

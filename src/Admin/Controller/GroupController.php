@@ -26,12 +26,18 @@ use Doctrine\ORM\EntityRepository;
 use FOS\RestBundle\Controller\Annotations\Get;
 use FOS\RestBundle\Controller\Annotations\Post;
 use FOS\RestBundle\Controller\Annotations\View;
-use FOS\RestBundle\Util\Codes;
 use Symfony\Component\Form\AbstractType;
+use Symfony\Component\Form\Extension\Core\Type\ButtonType;
+use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
+use Symfony\Component\Form\Extension\Core\Type\FormType;
+use Symfony\Component\Form\Extension\Core\Type\IntegerType;
+use Symfony\Component\Form\Extension\Core\Type\SubmitType;
+use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\Form;
 use Symfony\Component\Form\FormFactoryInterface;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 
@@ -100,7 +106,7 @@ class GroupController extends CRUDController
             ->setTemplateData(array(
             'group' => $group,
         ));
-        $view->getSerializationContext()->setGroups(['admin_group_list_members', 'list']);
+        $view->getContext()->setGroups(['admin_group_list_members', 'list']);
         return $view;
     }
 
@@ -158,7 +164,7 @@ class GroupController extends CRUDController
                 'search_form' => $searchForm->createView(),
                 'graph_form' => $this->createGraphForm($request, -1, false)->createView(),
             ));
-        $view->getSerializationContext()->setGroups(['admin_group_list', 'list']);
+        $view->getContext()->setGroups(['admin_group_list', 'list']);
         return $view;
     }
 
@@ -179,7 +185,7 @@ class GroupController extends CRUDController
         }
 
         $view = $this->view($group);
-        $view->getSerializationContext()->setGroups(array('admin_group_object', 'object'));
+        $view->getContext()->setGroups(array('admin_group_object', 'object'));
         $view->setTemplateData(\Closure::bind(function() use($request) {
             return array(
                 'graph_form' => $this->createGraphForm($request, 5, true)->createView(),
@@ -195,22 +201,22 @@ class GroupController extends CRUDController
     {
         $this->handleBatch($request);
 
-        return $this->routeRedirectView('admin_group_gets');
+        return $this->routeRedirectView('admin_group_gets', [], Response::HTTP_NO_CONTENT);
     }
 
     protected function getBatchActions()
     {
         $actions = parent::getBatchActions();
-        $actions['Exportable']['PATCH_exportable_true'] = 'Enable';
-        $actions['Exportable']['PATCH_exportable_false'] = 'Disable';
-        $actions['Member types']['PATCH_noUsers_false'] = 'Allow users';
-        $actions['Member types']['PATCH_noUsers_true'] = 'Deny users';
-        $actions['Member types']['PATCH_noGroups_false'] = 'Allow groups';
-        $actions['Member types']['PATCH_noGroups_true'] = 'Deny groups';
-        $actions['User leave/join']['PATCH_userJoinable_true'] = 'Make user joinable';
-        $actions['User leave/join']['PATCH_userJoinable_false'] = 'Make not user joinable';
-        $actions['User leave/join']['PATCH_userLeaveable_true'] = 'Make user leaveable';
-        $actions['User leave/join']['PATCH_userLeaveable_false'] = 'Make not user leaveable';
+        $actions['Exportable']['Enable'] = 'PATCH_exportable_true';
+        $actions['Exportable']['Disable'] = 'PATCH_exportable_false';
+        $actions['Member types']['Allow users'] = 'PATCH_noUsers_false';
+        $actions['Member types']['Deny users'] = 'PATCH_noUsers_true';
+        $actions['Member types']['Allow groups'] = 'PATCH_noGroups_false';
+        $actions['Member types']['Deny groups'] = 'PATCH_noGroups_true';
+        $actions['User leave/join']['Make user joinable'] = 'PATCH_userJoinable_true';
+        $actions['User leave/join']['Make not user joinable'] = 'PATCH_userJoinable_false';
+        $actions['User leave/join']['Make user leaveable'] = 'PATCH_userLeaveable_true';
+        $actions['User leave/join']['Make not user leaveable'] = 'PATCH_userLeaveable_false';
 
         return $actions;
     }
@@ -236,7 +242,7 @@ class GroupController extends CRUDController
 
         $this->getEntityManager()->flush();
 
-        return $this->routeRedirectView('admin_group_get', array('group'=>$group->getName()), Codes::HTTP_NO_CONTENT);
+        return $this->routeRedirectView('admin_group_get', array('group'=>$group->getName()), Response::HTTP_NO_CONTENT);
     }
 
     /**
@@ -261,7 +267,7 @@ class GroupController extends CRUDController
         $this->getEntityManager()->persist($form->getData());
         $this->getEntityManager()->flush();
 
-        return $this->routeRedirectView('admin_group_get', array('group'=>$form->getData()->getName()));
+        return $this->routeRedirectView('admin_group_get', array('group'=>$form->getData()->getName()), Response::HTTP_CREATED);
     }
 
     /**
@@ -281,7 +287,7 @@ class GroupController extends CRUDController
         if($ret)
             return $ret;
 
-        return $this->routeRedirectView('admin_group_gets', array(), Codes::HTTP_NO_CONTENT);
+        return $this->routeRedirectView('admin_group_gets', array(), Response::HTTP_NO_CONTENT);
     }
 
     public function linkAction(Request $request, Group $group)
@@ -322,7 +328,7 @@ class GroupController extends CRUDController
      */
     protected function getFormType()
     {
-        return new GroupType();
+        return GroupType::class;
     }
 
     protected function createNewEntity()
@@ -337,45 +343,50 @@ class GroupController extends CRUDController
     {
         $ff = $this->get('form.factory');
         /* @var $ff FormFactoryInterface */
-        return $ff->createNamedBuilder('q', 'form', null, array(
+        return $ff->createNamedBuilder('q', FormType::class, null, array(
             'csrf_protection' => false,
             'allow_extra_fields' => true
         ))
             ->setMethod('GET')
-            ->add('name', 'text', array(
+            ->add('name', TextType::class, array(
                 'required' => false,
             ))
-            ->add('techname', 'text', array(
+            ->add('techname', TextType::class, array(
                 'required' => false,
             ))
-            ->add('exportable', 'choice', array(
-                'choices' => array(0=>'No', 1=>'Yes'),
+            ->add('exportable', ChoiceType::class, array(
+                'choices' => array('No' => 0, 'Yes' => 1),
+                'choices_as_values' => true,
                 'expanded' => true,
                 'required' => false,
             ))
-            ->add('groups', 'choice', array(
-                'choices' => array(0=>'No', 1=>'Yes'),
+            ->add('groups', ChoiceType::class, array(
+                'choices' => array('No' => 0, 'Yes' => 1),
+                'choices_as_values' => true,
                 'expanded' => true,
                 'required' => false,
             ))
-            ->add('users', 'choice', array(
-                'choices' => array(0=>'No', 1=>'Yes'),
+            ->add('users', ChoiceType::class, array(
+                'choices' => array('No' => 0, 'Yes' => 1),
+                'choices_as_values' => true,
                 'expanded' => true,
                 'required' => false,
             ))
-            ->add('userjoin', 'choice', array(
-                'choices' => array(0=>'No', 1=>'Yes'),
+            ->add('userjoin', ChoiceType::class, array(
+                'choices' => array('No' => 0, 'Yes' => 1),
+                'choices_as_values' => true,
                 'label' => 'User joinable',
                 'expanded' => true,
                 'required' => false,
             ))
-            ->add('userleave', 'choice', array(
-                'choices' => array(0=>'No', 1=>'Yes'),
+            ->add('userleave', ChoiceType::class, array(
+                'choices' => array('No' => 0, 'Yes' => 1),
+                'choices_as_values' => true,
                 'label' => 'User leaveable',
                 'expanded' => true,
                 'required' => false,
             ))
-            ->add('search', 'submit')
+            ->add('search', SubmitType::class)
             ->getForm();
     }
 
@@ -386,17 +397,18 @@ class GroupController extends CRUDController
     {
         $ff = $this->get('form.factory');
         /* @var $ff FormFactoryInterface */
-        $builder =  $ff->createNamedBuilder('graph', 'form', array('depth' => $defaultDepth));
+        $builder =  $ff->createNamedBuilder('graph', FormType::class, array('depth' => $defaultDepth));
         if($includeDirection)
-            $builder->add('direction', 'choice', array(
+            $builder->add('direction', ChoiceType::class, array(
                 'choices' => array(
-                    'up' => 'Members',
-                    'down' => 'Parents',
-                    'both' => 'Both'
-                )
+                    'Members' => 'up',
+                    'Parents' => 'down',
+                    'Both' => 'both',
+                ),
+                'choices_as_values' => true,
             ));
-        $builder->add('depth', 'integer')
-            ->add('Create graph', 'button', array(
+        $builder->add('depth', IntegerType::class)
+            ->add('Create graph', ButtonType::class, array(
                 'attr' => array(
                     'class' => 'js--vizjs-load-graph'
                 )
