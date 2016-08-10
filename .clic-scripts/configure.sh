@@ -23,6 +23,16 @@ if [[ "$mail_transport" != "mail" ]]; then
 fi;
 
 $CLIC application:variable:set "$CLIC_APPNAME" mail/sender --description="Sender address of mails"  --default-existing-value
+
+
+shib_auto_enable_user=""
+while [[ "$shib_auto_enable_user" != "true" && "$shib_auto_enable_user" != "false" ]]; do
+    $CLIC application:variable:set "$CLIC_APPNAME" app/shibboleth_auto_enable_user --description="Should user accounts created automatically by a shibboleth login be activated immediately? [true|false]" --default-existing-value --default=false
+    shib_auto_enable_user="$($CLIC application:variable:get "$CLIC_APPNAME" app/shibboleth_auto_enable_user)"
+done;
+
+$CLIC application:variable:set "$CLIC_APPNAME" app/rollbar_token --description="Rollbar access token for this application" --default-existing-value
+
 $CLIC application:variable:set "$CLIC_APPNAME" app/configured 1
 
 cat > app/config/parameters-clic.yml <<EOL
@@ -44,6 +54,9 @@ parameters:
 
     locale:            en
     secret:            '$(pwgen -s 100)'
+
+    shibboleth_auto_enable_user: $($CLIC application:variable:get "$CLIC_APPNAME" app/shibboleth_auto_enable_user)
+    rollbar_access_token: $($CLIC application:variable:get "$CLIC_APPNAME" app/rollbar_token --filter=json_encode)
 EOL
 if [[ ! -e app/config/parameters.yml ]]; then
 cat > app/config/parameters.yml <<EOL
