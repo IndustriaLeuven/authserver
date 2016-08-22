@@ -16,7 +16,10 @@ else
         echo "Cannot determine archive type; you'll have to download and extract a new version yourself." >&2
         exit 1
     fi
-    tarball_url=$(curl https://api.github.com/repos/${repo}/tags | php -r 'echo json_decode(file_get_contents("php://stdin"), true)[0]["tarball_url"];')
+    tarball_url=$(curl https://api.github.com/repos/${repo}/releases | \
+        php -r 'echo array_filter(json_decode(file_get_contents("php://stdin")), function($release) {
+            return !$release->prerelease && !$release->draft;
+            })[0]->tarball_url;')
     if [[ "$current_archive" == "$tarball_url" ]]; then
         echo "No update available"
         exit 0
@@ -28,7 +31,9 @@ wget "$tarball_url" -O .clic-scripts/tmp/update.tar.gz
 source .clic-scripts/maintenance.inc.sh
 
 tar xf .clic-scripts/tmp/update.tar.gz -C . --strip-components=1
+set +e # Allow non-zero exit codes here, because grep exits nonzero when there are no lines to match (its possible that no files got deleted)
 removed_files=$(diff <(tar tf .clic-scripts/tmp/update-prev.tar.gz | sed 's/^[^\/]*\///' | sort) <(tar tf .clic-scripts/tmp/update.tar.gz | sed 's/^[^\/]*\///' | sort) | grep '^< ' | sed 's/^< //' | grep -v '/$')
+set -e
 for removed_file in ${removed_files}; do
     rm $(pwd)/${removed_file};
 done

@@ -31,6 +31,7 @@ class SecurityController extends Controller
     {
         $session = $request->getSession();
 
+        $error = null;
         // get the login error if there is one
         if ($request->attributes->has(Security::AUTHENTICATION_ERROR)) {
             $error = $request->attributes->get(Security::AUTHENTICATION_ERROR);
@@ -38,6 +39,7 @@ class SecurityController extends Controller
             $error = $session->get(Security::AUTHENTICATION_ERROR);
             $session->remove(Security::AUTHENTICATION_ERROR);
         }
+
         // Add the following lines
         if ($session->has('_security.target_path')) {
             if (false !== strpos($session->get('_security.target_path'), $this->generateUrl('fos_oauth_server_authorize'))) {
@@ -56,6 +58,7 @@ class SecurityController extends Controller
             'error'         => $error,
             'error_type'    => $error?get_class($error):null,
             'shibLogoutUrl' => $shibLogoutUrl,
+            'register_enabled' => $this->has('registration.handler'),
         ));
     }
 }

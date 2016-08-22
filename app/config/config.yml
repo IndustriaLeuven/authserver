@@ -1,5 +1,4 @@
 imports:
-    - { resource: parameters.yml }
     - { resource: config/security.yml }
     - { resource: config/framework.yml }
     - { resource: config/assetic.yml }
@@ -8,3 +7,4 @@ imports:
     - { resource: config/serializer.yml }
     - { resource: config/doctrine.yml }
     - { resource: config/shibboleth.yml }
+    - { resource: parameters.yml }

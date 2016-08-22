@@ -11,7 +11,11 @@ php app/console cache:clear
 php app/console assets:install
 php app/console assetic:dump
 php app/console braincrafted:bootstrap:install
-# Only execute migrations when there are new migrations available.
-php app/console doctrine:migrations:status | grep "New Migrations:" | cut -d: -f2 |grep "^ *0" > /dev/null || \
-php app/console doctrine:migrations:migrate </dev/tty
+if tty -s; then
+    # Only execute migrations when there are new migrations available.
+    php app/console doctrine:migrations:status | grep "New Migrations:" | cut -d: -f2 |grep "^ *0" > /dev/null || \
+    php app/console doctrine:migrations:migrate
+else
+    php app/console doctrine:migrations:migrate -n
+fi
 disable_maintenance
