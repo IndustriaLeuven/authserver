@@ -25,5 +25,14 @@
         <service class="App\EventListener\UserGuidCreatorListener">
             <tag name="doctrine.event_subscriber" />
         </service>
+
+        <!-- Monolog 404 exclusion listener -->
+        <service id="monolog_fingerscrossed_404_exclusion_activation_strategy" class="Symfony\Bridge\Monolog\Handler\FingersCrossed\NotFoundActivationStrategy">
+            <argument type="service" id="request_stack" />
+            <argument type="collection">
+                <argument>^/</argument>
+            </argument>
+            <argument>error</argument>
+        </service>
     </services>
 </container>

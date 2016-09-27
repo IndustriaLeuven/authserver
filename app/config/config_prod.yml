@@ -15,8 +15,7 @@ monolog:
             type:         fingers_crossed
             action_level: error
             handler:      nested
-            excluded_404s:
-                - ^/
+            activation_strategy: monolog_fingerscrossed_404_exclusion_activation_strategy
         nested:
             type: group
             members: [stream, rollbar]
